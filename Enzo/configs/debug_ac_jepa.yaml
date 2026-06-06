@@ -1,0 +1,51 @@
+# Minimal action-conditioned JEPA config for smoke runs.
+
+meta:
+  seed: 1
+  device: auto
+  model_folder:
+
+logging:
+  log_wandb: false
+  wandb_group:
+  wandb_sweep_id:
+  sweep_name:
+  exp_name: debug_ac_jepa
+
+training:
+  use_amp: true
+  dtype: bfloat16
+
+data:
+  env_name: template_env
+  batch_size: 8
+  num_workers: 0
+  img_size: 65
+  action_dim: 2
+
+model:
+  dobs: 2
+  henc: 16
+  dstc: 16
+  mlp_output_dim: 128
+  nsteps: 4
+  num_blocks: 2
+  predictor_num_layers: 1
+  final_ln: true
+  regularizer:
+    cov_coeff: 8.0
+    std_coeff: 16.0
+    sim_coeff_t: 12.0
+    idm_coeff: 1.0
+    first_t_only: false
+    spatial_as_samples: false
+    use_proj: false
+    idm_after_proj: false
+    sim_t_after_proj: false
+    idm_hidden_dim: 128
+
+optim:
+  lr: 0.001
+  weight_decay: 0.00001
+  grad_clip: 2.0
+

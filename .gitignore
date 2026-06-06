@@ -23,3 +23,6 @@ stage_mva/
 *.flac
 *.mp3
 *.csv
+plan_eval/
+unroll_eval/
+datasets/
