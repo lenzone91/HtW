@@ -1,0 +1,17 @@
+logging:
+  tqdm_silent: false
+task_specification:
+  goal_source: random_state
+  obs: rgb
+planner:
+  planner_name: neural_stochastic
+  num_act_stepped: 1
+  plan_length: 90
+  num_samples: 200
+  variance: 1.0
+  # sampler_target: my_package.my_module.MyLearnedActionSampler
+  planning_objective:
+    objective_type: repr_dist
+    sum_all_diffs: true
+    alpha: 0.
+ctxt_window_time: 1
