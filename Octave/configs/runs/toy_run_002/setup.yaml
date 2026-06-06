@@ -1,0 +1,54 @@
+environment:
+  required_imports:
+    - ipykernel
+    - numpy
+    - pandas
+    - matplotlib
+    - tqdm
+    - dtaidistance
+    - torchmetrics
+    - wandb
+    - torch
+    - torchvision
+    - torchaudio
+    - lightning
+
+hardware:
+  strict: false
+  accelerator: auto
+  devices: null
+  require_cuda: false
+
+reproducibility:
+  seed: 42
+  deterministic: false
+  cudnn_benchmark: false
+
+paths:
+  idea_root: "."
+  run_root: null
+  experiment_name: toy_experiment
+  run_name: toy_run_002
+  sweep_name: null
+  overwrite: true
+
+data:
+  strict: true
+  dataset_roots: {}
+
+user_credential:
+  enabled: true
+  strict: true
+  path: user_credential.yaml
+  environment_variables: 
+   WANDB_API_KEY:
+      - wandb
+      - api_key
+
+logger_registration:
+  wandb:
+    enabled: true
+    login: true
+    mode: online
+    api_key_env_var: WANDB_API_KEY
+    strict: true

@@ -1,0 +1,7 @@
+setup:
+  seed: 456
+  deterministic: true
+
+trainer:
+  max_epochs: 5
+  accelerator: cpu

@@ -1,0 +1,23 @@
+# Notebook / development
+ipykernel
+
+# Scientific base
+numpy
+pandas
+matplotlib
+tqdm
+
+# Time series distances
+dtaidistance
+
+# Metrics
+torchmetrics[audio]
+
+# Loggers
+wandb
+
+# Config management
+PyYAML
+
+# Unit testing
+pytest

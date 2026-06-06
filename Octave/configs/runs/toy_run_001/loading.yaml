@@ -1,0 +1,17 @@
+model:
+  enabled: false
+  type: torch_model
+  checkpoint_path: null
+  strict: true
+  map_location: cpu
+  state_dict_key: null
+  relative_to: idea_root
+
+module:
+  enabled: false
+  type: lightning_module
+  checkpoint_path: null
+  strict: true
+  map_location: cpu
+  state_dict_key: state_dict
+  relative_to: idea_root

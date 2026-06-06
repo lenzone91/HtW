@@ -1,0 +1,4 @@
+tse_waveform:
+  strict: true
+  collator_config: {}
+  transforms: {}

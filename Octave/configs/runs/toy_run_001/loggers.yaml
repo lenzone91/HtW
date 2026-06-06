@@ -1,0 +1,24 @@
+csv:
+  save_dir: logs
+  name: csv_reports
+  version: null
+  prefix: ""
+  flush_logs_every_n_steps: 100
+
+wandb:
+  name: toy_run_001
+  save_dir: logs
+  version: null
+  offline: false
+  dir: null
+  id: null
+  anonymous: null
+  project: tse-toy
+  log_model: false
+  experiment: null
+  prefix: ""
+  checkpoint_name: null
+  add_file_policy: mutable
+  # tags:
+  #   - toy
+  #   - pipeline_check

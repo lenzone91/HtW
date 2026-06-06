@@ -1,0 +1,4 @@
+finite_val_loss:
+  early_stopping_type: finite_value
+  monitor: val/loss
+  mode: min

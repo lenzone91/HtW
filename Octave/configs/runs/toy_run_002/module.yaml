@@ -1,0 +1,18 @@
+waveunet:
+  module_type: waveunet
+
+  model_configs: model.yaml
+    # model: model.yaml
+
+  train_metrics_config: train_metrics.yaml
+  val_metrics_config: val_metrics.yaml
+  test_metrics_config: test_metrics.yaml
+
+  loss_weights: loss.yaml
+
+  optimizer_configs: optimizer.yaml
+  scheduler_configs: scheduler.yaml
+
+  log_loss_ml_steps:
+    - train
+    - val

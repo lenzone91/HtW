@@ -1,0 +1,17 @@
+setup: setup.yaml
+
+datamodule: datamodule.yaml
+
+module: module.yaml
+
+loading: loading.yaml
+
+resume: resume.yaml
+
+loggers: loggers.yaml
+
+checkpoints: checkpoints.yaml
+
+early_stoppings: early_stoppings.yaml
+
+trainer: trainer.yaml

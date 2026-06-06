@@ -1,0 +1,4 @@
+waveunet:
+  scheduler_type: step_lr
+  step_size: 10
+  gamma: 0.1

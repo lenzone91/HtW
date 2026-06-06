@@ -1,0 +1,392 @@
+setup:
+  environment:
+    required_imports:
+    - ipykernel
+    - numpy
+    - pandas
+    - matplotlib
+    - tqdm
+    - dtaidistance
+    - torchmetrics
+    - wandb
+    - torch
+    - torchvision
+    - torchaudio
+    - lightning
+  hardware:
+    strict: false
+    accelerator: auto
+    devices: null
+    require_cuda: false
+  reproducibility:
+    seed: 42
+    deterministic: false
+    cudnn_benchmark: false
+  paths:
+    idea_root: .
+    run_root: null
+    experiment_name: toy_experiment
+    run_name: toy_run_002
+    sweep_name: null
+    overwrite: true
+  data:
+    strict: true
+    dataset_roots: {}
+  user_credential:
+    enabled: true
+    strict: true
+    path: user_credential.yaml
+    environment_variables:
+      WANDB_API_KEY:
+      - wandb
+      - api_key
+  logger_registration:
+    wandb:
+      enabled: true
+      login: true
+      mode: online
+      api_key_env_var: WANDB_API_KEY
+      strict: true
+datamodule:
+  default:
+    strict: true
+    datasets:
+      train:
+        source_separation:
+          path: C:/Users/octav/Documents/Cours/ENS/Maths/MVA/Stage/Dev/Datasets/Toy/train
+          path_key: null
+          canonical_dtype: float32
+          load_on_demand: false
+          normalize_by_mixture_peak: true
+      val:
+        source_separation:
+          path: C:/Users/octav/Documents/Cours/ENS/Maths/MVA/Stage/Dev/Datasets/Toy/val
+          path_key: null
+          canonical_dtype: float32
+          load_on_demand: false
+          normalize_by_mixture_peak: true
+      test:
+        source_separation:
+          path: C:/Users/octav/Documents/Cours/ENS/Maths/MVA/Stage/Dev/Datasets/Toy/test
+          path_key: null
+          canonical_dtype: float32
+          load_on_demand: false
+          normalize_by_mixture_peak: true
+    collators:
+      train:
+        tse_waveform:
+          strict: true
+          collator_config: {}
+          transforms: {}
+      val:
+        tse_waveform:
+          strict: true
+          collator_config: {}
+          transforms: {}
+      test:
+        tse_waveform:
+          strict: true
+          collator_config: {}
+          transforms: {}
+    dataloader_configs:
+      train:
+        batch_size: 2
+        shuffle: true
+        num_workers: 0
+        pin_memory: false
+        drop_last: true
+      val:
+        batch_size: 2
+        shuffle: false
+        num_workers: 0
+        pin_memory: false
+        drop_last: false
+      test:
+        batch_size: 2
+        shuffle: false
+        num_workers: 0
+        pin_memory: false
+        drop_last: false
+module:
+  waveunet:
+    module_type: waveunet
+    model_configs:
+      waveunet:
+        Fc: 4
+        fd: 5
+        fu: 5
+        L: 2
+    train_metrics_config:
+      set_type: tse
+      strict: true
+      metric_to_input_names: null
+      metrics:
+        snr:
+          zero_mean: false
+          reduction: mean
+        sisdr:
+          zero_mean: false
+          reduction: mean
+        sdsdr:
+          mu: 1.0
+          eps: 1.0e-08
+          reduction: mean
+        sisir:
+          eps: 1.0e-08
+          reduction: mean
+        sisar:
+          eps: 1.0e-08
+          reduction: mean
+        lp_error:
+          p: 2.0
+          reduction: mean
+        lsd:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+        spectral_kl:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+          normalize: true
+        itakura_saito:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+    val_metrics_config:
+      set_type: tse
+      strict: true
+      metric_to_input_names: null
+      metrics:
+        snr:
+          zero_mean: false
+          reduction: mean
+        sisdr:
+          zero_mean: false
+          reduction: mean
+        sdsdr:
+          mu: 1.0
+          eps: 1.0e-08
+          reduction: mean
+        dtw:
+          reduction: mean
+          use_pruning: true
+        lp_error:
+          p: 2.0
+          reduction: mean
+        sisir:
+          eps: 1.0e-08
+          reduction: mean
+        sisar:
+          eps: 1.0e-08
+          reduction: mean
+        lsd:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+        spectral_kl:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+          normalize: true
+        itakura_saito:
+          n_fft: 512
+          hop_length: null
+          win_length: null
+          window: hann
+          center: true
+          normalized: false
+          onesided: true
+          eps: 1.0e-08
+          reduction: mean
+        stoi:
+          sample_rate: 16000
+          reduction: mean
+        estoi:
+          sample_rate: 16000
+          reduction: mean
+        pesq:
+          sample_rate: 16000
+          mode: wb
+          reduction: mean
+        dnsmos_p808:
+          sample_rate: 16000
+          personalized: false
+          device: null
+          num_threads: null
+          cache_session: true
+          reduction: mean
+        dnsmos_p835:
+          sample_rate: 16000
+          personalized: false
+          device: null
+          num_threads: null
+          cache_session: true
+          reduction: mean
+        dnsmos_sig:
+          sample_rate: 16000
+          personalized: false
+          device: null
+          num_threads: null
+          cache_session: true
+          reduction: mean
+        dnsmos_bak:
+          sample_rate: 16000
+          personalized: false
+          device: null
+          num_threads: null
+          cache_session: true
+          reduction: mean
+        dnsmos_ovrl:
+          sample_rate: 16000
+          personalized: false
+          device: null
+          num_threads: null
+          cache_session: true
+          reduction: mean
+    test_metrics_config:
+      set_type: tse
+      strict: true
+      metric_to_input_names: null
+      metrics:
+        snr:
+          zero_mean: false
+          reduction: mean
+        sisdr:
+          zero_mean: false
+          reduction: mean
+        sdsdr:
+          mu: 1.0
+          eps: 1.0e-08
+          reduction: mean
+        lp_error:
+          p: 2.0
+          reduction: mean
+    loss_weights:
+      loss_type: weighted_metric
+      name: loss
+      strict: true
+      return_loss_terms: true
+      metric_weights:
+        snr: -1.0
+        sisdr: -1.0
+        sdsdr: -1.0
+        lp_error: 1.0
+    optimizer_configs:
+      waveunet:
+        optimizer_type: adamw
+        lr: 0.001
+        betas:
+        - 0.9
+        - 0.999
+        eps: 1.0e-08
+        weight_decay: 0.01
+        amsgrad: false
+        maximize: false
+        foreach: null
+        capturable: false
+        differentiable: false
+        fused: null
+    scheduler_configs:
+      waveunet:
+        scheduler_type: step_lr
+        step_size: 10
+        gamma: 0.1
+    log_loss_ml_steps:
+    - train
+    - val
+loading:
+  model:
+    enabled: false
+    type: torch_model
+    checkpoint_path: null
+    strict: true
+    map_location: cpu
+    state_dict_key: null
+    relative_to: idea_root
+  module:
+    enabled: false
+    type: lightning_module
+    checkpoint_path: null
+    strict: true
+    map_location: cpu
+    state_dict_key: state_dict
+    relative_to: idea_root
+resume:
+  enabled: false
+  checkpoint_path: null
+loggers:
+  csv:
+    save_dir: logs
+    name: csv_reports
+    version: null
+    prefix: ''
+    flush_logs_every_n_steps: 100
+  wandb:
+    name: toy_run_002
+    save_dir: logs
+    version: null
+    offline: false
+    dir: null
+    id: null
+    anonymous: null
+    project: tse-toy
+    log_model: false
+    experiment: null
+    prefix: ''
+    checkpoint_name: null
+    add_file_policy: mutable
+checkpoints:
+  last:
+    checkpoint_type: last
+    dirpath: null
+    filename: last
+    every_n_epochs: 1
+  best_val_loss:
+    checkpoint_type: best_value
+    dirpath: null
+    filename: best-{epoch}-{step}-{val_loss:.4f}
+    monitor: val/loss
+    mode: min
+    save_top_k: 1
+early_stoppings:
+  finite_val_loss:
+    early_stopping_type: finite_value
+    monitor: val/loss
+    mode: min
+trainer:
+  max_epochs: 1
+  accelerator: auto
+  devices: auto
+  log_every_n_steps: 1
+  enable_checkpointing: true
