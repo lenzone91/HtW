@@ -7,8 +7,10 @@ __pycache__/
 .env
 .venv/
 .idea/
-venv/
+.venv/
 stage_mva/
+.venv*/
+.venv312/
 
 **/user_credential.*
 
