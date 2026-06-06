@@ -9,7 +9,7 @@ planner:
   plan_length: 90
   num_samples: 200
   variance: 1.0
-  # sampler_target: my_package.my_module.MyLearnedActionSampler
+  # sampler_target: eb_jepa.planning.samplers.NeuralActionSampler
   planning_objective:
     objective_type: repr_dist
     sum_all_diffs: true

@@ -78,6 +78,8 @@ class NeuralStochasticPlanner(Planner):
         self.action_sampler = (
             import_from_target(sampler_target)() if sampler_target is not None else None
         )
+        if hasattr(self.action_sampler, "to"):
+            self.action_sampler = self.action_sampler.to(self.device)
 
         action_low, action_high = self._extract_action_bounds(
             action_space=action_space,
