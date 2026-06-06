@@ -1,0 +1,3 @@
+[submodule "eb_jepa"]
+	path = eb_jepa
+	url = org-16943930@github.com:facebookresearch/eb_jepa.git
