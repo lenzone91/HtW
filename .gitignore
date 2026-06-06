@@ -30,5 +30,5 @@ stage_mva/
 *.csv
 plan_eval/
 unroll_eval/
-datasets/
+Enzo/datasets/
 dev_2026*/
