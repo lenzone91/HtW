@@ -1,0 +1,6 @@
+# Additional HTW-side dependencies.
+# Keep this file minimal: eb_jepa owns the strict core dependencies
+# such as torch, torchvision, etc.
+
+lightning
+ipykernel 
