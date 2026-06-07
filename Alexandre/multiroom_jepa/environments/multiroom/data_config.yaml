@@ -1,0 +1,29 @@
+# MultiRoom environment default parameters
+# Inherits all TwoRooms defaults; only overrides are listed here.
+
+# --- Multi-room specific ---
+num_rooms: 3             # number of rooms (= num_walls + 1)
+min_room_width: 10       # minimum pixel width of each room
+
+# --- Image / simulation ---
+img_size: 65
+border_wall_loc: 5
+normalize: true
+n_steps: 300
+n_steps_reduce_factor: 1
+sample_length: 17
+
+# --- Wall / door geometry (same defaults as TwoRooms) ---
+wall_width: 3
+door_space: 4
+cross_wall_rate: 0.35    # rate of cross-wall trajectories
+
+# --- DataLoader ---
+batch_size: 128
+num_workers: 4
+pin_mem: false
+persistent_workers: false
+
+# --- Trajectory generation ---
+action_noise: 0.3
+action_repeat: 3

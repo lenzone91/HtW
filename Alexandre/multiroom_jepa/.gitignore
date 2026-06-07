@@ -1,0 +1,31 @@
+# Virtual environment
+.venv/
+
+# Generated outputs (samples, checkpoints)
+output/*.pt
+output/*.png
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Experiment logs
+wandb/
+*.log
