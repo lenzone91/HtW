@@ -35,10 +35,12 @@ def test_setup_runtime_returns_paths_reproducibility_and_logger_context(
     )
 
     assert set(runtime_context) == {
+        "credentials",
         "paths",
         "reproducibility",
         "logger_registration",
     }
+    assert runtime_context["credentials"]["loaded_env_vars"] == []
     assert runtime_context["reproducibility"]["seed"] == 123
 
 

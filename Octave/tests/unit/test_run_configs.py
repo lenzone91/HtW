@@ -42,6 +42,35 @@ def test_ac_video_jepa_train_config_enables_wandb_and_checkpoints() -> None:
     assert config["loading"]["module"]["enabled"] is False
 
 
+def test_ac_video_jepa_debug_config_is_short_non_fast_dev_run() -> None:
+    config = load_run_config("ac_video_jepa_debug.yaml")
+
+    assert "fast_dev_run" not in config["trainer"]
+    assert config["trainer"]["max_steps"] == 2
+    assert config["trainer"]["limit_val_batches"] == 1
+    assert config["loggers"]["csv"]["flush_logs_every_n_steps"] == 1
+    assert set(config["checkpoints"]) == {"last"}
+    assert config["setup"]["logger_registration"]["wandb"]["enabled"] is False
+
+
+def test_run_configs_use_safe_cuda_dataloader_settings() -> None:
+    run_configs = [
+        load_run_config("ac_video_jepa_train.yaml"),
+        load_run_config("ac_video_jepa_validate.yaml"),
+    ]
+
+    for config in run_configs:
+        for phase, dataset_config in config["datamodule"]["datasets"].items():
+            if dataset_config is None:
+                continue
+
+            dataloader_config = config["datamodule"]["dataloader_configs"][phase]
+
+            if dataset_config["device"] == "cuda":
+                assert dataloader_config["num_workers"] == 0
+                assert dataloader_config["persistent_workers"] is False
+
+
 def test_ac_video_jepa_train_config_matches_ac_model_contract() -> None:
     config = load_run_config("ac_video_jepa_train.yaml")
     model_config = config["module"]["model_config"]

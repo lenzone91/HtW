@@ -66,6 +66,31 @@ class BaseDataModule(L.LightningDataModule):
             if phase not in self.dataloader_configs:
                 raise KeyError(f"Missing DataLoader config for phase '{phase}'.")
 
+            self.check_dataloader_config(
+                phase=phase,
+                dataloader_config=self.dataloader_configs[phase],
+            )
+
+    def check_dataloader_config(
+        self,
+        phase: str,
+        dataloader_config: dict,
+    ) -> None:
+        if not isinstance(dataloader_config, dict):
+            raise TypeError(
+                f"DataLoader config for phase '{phase}' must be a dictionary, "
+                f"got {type(dataloader_config).__name__}."
+            )
+
+        num_workers = dataloader_config.get("num_workers", 0)
+        persistent_workers = dataloader_config.get("persistent_workers", False)
+
+        if persistent_workers and num_workers <= 0:
+            raise ValueError(
+                "Invalid DataLoader config for phase "
+                f"'{phase}': persistent_workers=True requires num_workers > 0."
+            )
+
     def check_known_phase(self, phase: str) -> None:
         if phase not in self.datasets:
             raise KeyError(

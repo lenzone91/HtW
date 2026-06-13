@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import torch
+
 from ..Collators.factory import build_collator
 from ..Datasets.factory import build_datasets
 from .ac_video_jepa_datamodule import AcVideoJepaDataModule
@@ -67,6 +69,7 @@ class AcVideoJepaDataModuleBuilder:
             )
 
         self.check_phase_sections(prepared_config)
+        self.check_runtime_semantics(prepared_config)
         return prepared_config
 
     def merge_phase_section(
@@ -149,6 +152,70 @@ class AcVideoJepaDataModuleBuilder:
                     f"DataModule section '{section_name}' must define phases "
                     f"{sorted(VALID_PHASES)}, got {sorted(section)}."
                 )
+
+    def check_runtime_semantics(self, config: dict) -> None:
+        for phase in VALID_PHASES:
+            dataset_config = config["datasets"][phase]
+            dataloader_config = config["dataloader_configs"][phase]
+
+            if dataset_config is None:
+                continue
+
+            self.check_phase_dataloader_config(
+                phase=phase,
+                dataloader_config=dataloader_config,
+            )
+            self.check_dataset_device_semantics(
+                phase=phase,
+                dataset_config=dataset_config,
+                dataloader_config=dataloader_config,
+            )
+
+    def check_phase_dataloader_config(
+        self,
+        phase: str,
+        dataloader_config: dict,
+    ) -> None:
+        if not isinstance(dataloader_config, dict):
+            raise TypeError(
+                f"DataLoader config for phase '{phase}' must be a dictionary, "
+                f"got {type(dataloader_config).__name__}."
+            )
+
+        num_workers = dataloader_config.get("num_workers", 0)
+        persistent_workers = dataloader_config.get("persistent_workers", False)
+
+        if persistent_workers and num_workers <= 0:
+            raise ValueError(
+                "Invalid DataLoader config for phase "
+                f"'{phase}': persistent_workers=True requires num_workers > 0."
+            )
+
+    def check_dataset_device_semantics(
+        self,
+        phase: str,
+        dataset_config: dict,
+        dataloader_config: dict,
+    ) -> None:
+        requested_device = str(dataset_config.get("device", "cpu"))
+        num_workers = dataloader_config.get("num_workers", 0)
+
+        if not requested_device.startswith("cuda"):
+            return
+
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                "Dataset config for phase "
+                f"'{phase}' requested device='{requested_device}', but "
+                "torch.cuda.is_available() is False."
+            )
+
+        if num_workers > 0:
+            raise ValueError(
+                "Invalid config for phase "
+                f"'{phase}': CUDA dataset sampling with num_workers > 0 is unsafe. "
+                "Use num_workers=0 or generate dataset samples on CPU."
+            )
 
 
 def build_ac_video_jepa_datamodule(

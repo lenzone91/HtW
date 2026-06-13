@@ -22,6 +22,13 @@ owned here.
 - unit and integration tests for Octave;
 - generated source code should be covered by focused tests.
 
+`launch.py`
+
+- parses CLI run intent;
+- dispatches to training or validation execution;
+- may override `setup.paths.existing_run_dir_policy`;
+- does not delete or create run directories directly.
+
 `src/Execution/`
 
 - owns training and validation runs.
@@ -63,3 +70,14 @@ of this migration.
 
 Whenever new source code is added under `src/`, add a focused test under
 `tests/`.
+
+## Launch Examples
+
+```bash
+python Octave/launch.py Octave/configs/runs/ac_video_jepa_train.yaml --mode train
+python Octave/launch.py Octave/configs/runs/ac_video_jepa_train.yaml --mode train --overwrite
+python Octave/launch.py Octave/configs/runs/ac_video_jepa_train.yaml --mode train --ask-overwrite
+```
+
+`--overwrite` and `--ask-overwrite` only modify the runtime config. Setup owns
+the actual run-directory policy.

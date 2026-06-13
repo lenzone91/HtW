@@ -38,17 +38,38 @@ class AcVideoJepaModule(BaseLightningModule):
 
     def training_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
-        self.log_step_dict("train", log_dict, prog_bar=True, on_step=True)
+        self.log_step_dict(
+            "train",
+            log_dict,
+            prog_bar=True,
+            on_step=True,
+            on_epoch=True,
+            logger=True,
+        )
         return loss
 
     def validation_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
-        self.log_step_dict("val", log_dict, prog_bar=False, on_epoch=True)
+        self.log_step_dict(
+            "val",
+            log_dict,
+            prog_bar=False,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
+        )
         return loss
 
     def test_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
-        self.log_step_dict("test", log_dict, prog_bar=False, on_epoch=True)
+        self.log_step_dict(
+            "test",
+            log_dict,
+            prog_bar=False,
+            on_step=False,
+            on_epoch=True,
+            logger=True,
+        )
         return loss
 
     def compute_step_loss(self, batch: dict) -> tuple[torch.Tensor, dict[str, object]]:

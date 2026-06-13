@@ -10,6 +10,13 @@ This folder stores plain YAML configs for AcVideoJepa runs.
 - exercises DataModule and Lightning module factories;
 - intended for fast integration tests, not real training quality.
 
+`ac_video_jepa_debug.yaml`
+
+- short CPU debug config;
+- runs without `fast_dev_run`;
+- exercises launch, setup, execution, CSV logging, checkpointing, and reports;
+- intended for integration tests before relying on longer training runs.
+
 `ac_video_jepa_train.yaml`
 
 - non-toy training config for AcVideoJepa;

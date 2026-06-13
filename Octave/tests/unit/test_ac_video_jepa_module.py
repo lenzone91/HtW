@@ -103,6 +103,56 @@ def test_ac_video_jepa_module_training_step_returns_loss() -> None:
     assert loss.shape == torch.Size([])
 
 
+def test_ac_video_jepa_module_training_step_logs_to_logger_on_step_and_epoch(
+    monkeypatch,
+) -> None:
+    module = make_module()
+    log_calls = []
+
+    monkeypatch.setattr(
+        module,
+        "log_step_dict",
+        lambda *args, **kwargs: log_calls.append((args, kwargs)),
+    )
+
+    module.training_step(make_batch(), batch_idx=0)
+
+    assert len(log_calls) == 1
+    args, kwargs = log_calls[0]
+    assert args[0] == "train"
+    assert kwargs == {
+        "prog_bar": True,
+        "on_step": True,
+        "on_epoch": True,
+        "logger": True,
+    }
+
+
+def test_ac_video_jepa_module_validation_step_logs_to_logger_on_epoch(
+    monkeypatch,
+) -> None:
+    module = make_module()
+    log_calls = []
+
+    monkeypatch.setattr(
+        module,
+        "log_step_dict",
+        lambda *args, **kwargs: log_calls.append((args, kwargs)),
+    )
+
+    module.validation_step(make_batch(), batch_idx=0)
+
+    assert len(log_calls) == 1
+    args, kwargs = log_calls[0]
+    assert args[0] == "val"
+    assert kwargs == {
+        "prog_bar": False,
+        "on_step": False,
+        "on_epoch": True,
+        "logger": True,
+    }
+
+
 def test_ac_video_jepa_module_configure_optimizers_returns_optimizer() -> None:
     module = make_module()
 

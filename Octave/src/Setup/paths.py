@@ -1,5 +1,9 @@
 from pathlib import Path
 import shutil
+import sys
+
+
+EXISTING_RUN_DIR_POLICIES = {"fail", "overwrite", "ask"}
 
 
 def setup_paths(
@@ -19,12 +23,15 @@ def setup_paths(
 
     experiment_name = paths_config.get("experiment_name", "ac_video_jepa")
     run_name = paths_config.get("run_name", "default_run")
-    overwrite = paths_config.get("overwrite", False)
+    existing_run_dir_policy = resolve_existing_run_dir_policy(paths_config)
 
     experiment_dir = run_root / experiment_name
     run_dir = experiment_dir / run_name
 
-    prepare_run_dir(run_dir=run_dir, overwrite=overwrite)
+    prepare_run_dir(
+        run_dir=run_dir,
+        existing_run_dir_policy=existing_run_dir_policy,
+    )
 
     path_context = {
         "project_root": project_root,
@@ -70,14 +77,65 @@ def resolve_path(path: str | Path, root: str | Path | None = None) -> Path:
     return (Path(root).expanduser().resolve() / path).resolve()
 
 
-def prepare_run_dir(run_dir: Path, overwrite: bool) -> None:
-    if run_dir.exists() and overwrite:
-        shutil.rmtree(run_dir)
+def resolve_existing_run_dir_policy(paths_config: dict) -> str:
+    policy = paths_config.get("existing_run_dir_policy")
 
-    if run_dir.exists() and not overwrite:
+    if policy is None:
+        policy = "overwrite" if paths_config.get("overwrite", False) else "fail"
+
+    if policy not in EXISTING_RUN_DIR_POLICIES:
+        raise ValueError(
+            "Invalid existing_run_dir_policy: "
+            f"{policy}. Expected one of {sorted(EXISTING_RUN_DIR_POLICIES)}."
+        )
+
+    return policy
+
+
+def prepare_run_dir(
+    run_dir: Path,
+    existing_run_dir_policy: str,
+) -> None:
+    if not run_dir.exists():
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return
+
+    if existing_run_dir_policy == "fail":
         raise FileExistsError(f"Run directory already exists: {run_dir}")
 
-    run_dir.mkdir(parents=True, exist_ok=True)
+    if existing_run_dir_policy == "overwrite":
+        shutil.rmtree(run_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return
+
+    if existing_run_dir_policy == "ask":
+        confirm_run_dir_deletion(run_dir)
+        shutil.rmtree(run_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        return
+
+    raise ValueError(
+        "Invalid existing_run_dir_policy: "
+        f"{existing_run_dir_policy}. Expected one of "
+        f"{sorted(EXISTING_RUN_DIR_POLICIES)}."
+    )
+
+
+def confirm_run_dir_deletion(run_dir: Path) -> None:
+    if not sys.stdin.isatty():
+        raise FileExistsError(
+            "Run directory already exists and existing_run_dir_policy='ask' "
+            "cannot prompt in a non-interactive environment: "
+            f"{run_dir}"
+        )
+
+    answer = input(
+        "Run directory already exists. Delete and recreate it? "
+        f"{run_dir} [y/N]: "
+    )
+
+    if answer.strip().lower() not in {"y", "yes"}:
+        raise FileExistsError(f"Run directory already exists: {run_dir}")
 
 
 def create_run_subdirs(path_context: dict) -> None:

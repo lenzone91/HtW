@@ -7,6 +7,7 @@ This folder owns LightningModule orchestration for AcVideoJepa.
 `base.py`
 
 - defines logging helpers shared by Lightning modules;
+- forwards explicit Lightning logging options to `self.log_dict`;
 - validates ML-step names and log dictionaries.
 
 `ac_video_jepa_module.py`
@@ -15,6 +16,9 @@ This folder owns LightningModule orchestration for AcVideoJepa.
 - receives an already-built AcVideoJepa model;
 - parses collated batch dictionaries;
 - calls `model.unroll`.
+- logs train losses on step and epoch;
+- logs validation and test losses on epoch;
+- emits scalar logs to configured Lightning loggers.
 
 `configs.py`
 
@@ -55,6 +59,26 @@ The module expects collated batches with:
 ```
 
 `states` and `actions` are passed to AcVideoJepa `unroll`.
+
+## Logging Contract
+
+Training metrics are logged with:
+
+```python
+on_step=True
+on_epoch=True
+logger=True
+```
+
+Validation and test metrics are logged with:
+
+```python
+on_step=False
+on_epoch=True
+logger=True
+```
+
+This keeps progress-bar feedback and dashboard scalar curves aligned.
 
 ## Extension Steps
 

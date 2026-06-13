@@ -7,6 +7,7 @@ from torch.utils.data import Dataset
 from Octave.src.Data.Collators.ac_video_jepa_collator import AcVideoJepaCollator
 from Octave.src.Data.DataModules.base import BaseDataModule
 from Octave.src.Data.DataModules.configs import DEFAULT_AC_VIDEO_JEPA_DATAMODULE_CONFIG
+from Octave.src.Data.DataModules import factory as datamodule_factory
 from Octave.src.Data.DataModules.factory import build_ac_video_jepa_datamodule
 from Octave.src.Data.DataModules.ac_video_jepa_datamodule import AcVideoJepaDataModule
 
@@ -107,6 +108,21 @@ def test_base_datamodule_rejects_missing_dataloader_config() -> None:
         )
 
 
+def test_base_datamodule_rejects_persistent_workers_without_workers() -> None:
+    with pytest.raises(ValueError, match="persistent_workers=True requires"):
+        BaseDataModule(
+            datasets={"train": DummyDataset()},
+            collators={"train": AcVideoJepaCollator()},
+            dataloader_configs={
+                "train": {
+                    "batch_size": 2,
+                    "num_workers": 0,
+                    "persistent_workers": True,
+                },
+            },
+        )
+
+
 def test_build_ac_video_jepa_datamodule_builds_datamodule_from_plain_config() -> None:
     datamodule = build_ac_video_jepa_datamodule(
         config=make_tiny_datamodule_config(),
@@ -154,4 +170,36 @@ def test_build_ac_video_jepa_datamodule_rejects_unknown_phase() -> None:
     config["datasets"]["predict"] = None
 
     with pytest.raises(KeyError, match="Unknown phases"):
+        build_ac_video_jepa_datamodule(config=config)
+
+
+def test_build_ac_video_jepa_datamodule_rejects_persistent_workers_without_workers() -> None:
+    config = make_tiny_datamodule_config()
+    config["dataloader_configs"]["train"]["persistent_workers"] = True
+
+    with pytest.raises(ValueError, match="persistent_workers=True requires"):
+        build_ac_video_jepa_datamodule(config=config)
+
+
+def test_build_ac_video_jepa_datamodule_rejects_cuda_dataset_when_unavailable(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(datamodule_factory.torch.cuda, "is_available", lambda: False)
+    config = make_tiny_datamodule_config()
+    config["datasets"]["train"]["device"] = "cuda"
+    config["dataloader_configs"]["train"]["num_workers"] = 0
+
+    with pytest.raises(RuntimeError, match="torch.cuda.is_available\\(\\) is False"):
+        build_ac_video_jepa_datamodule(config=config)
+
+
+def test_build_ac_video_jepa_datamodule_rejects_cuda_dataset_with_workers(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(datamodule_factory.torch.cuda, "is_available", lambda: True)
+    config = make_tiny_datamodule_config()
+    config["datasets"]["train"]["device"] = "cuda"
+    config["dataloader_configs"]["train"]["num_workers"] = 1
+
+    with pytest.raises(ValueError, match="CUDA dataset sampling with num_workers > 0"):
         build_ac_video_jepa_datamodule(config=config)

@@ -1,40 +1,49 @@
 datamodule:
   datasets:
-    train: null
+    train:
+      dataset_type: two_rooms
+      device: cpu
+      size: 4
+      val_size: 4
+      batch_size: 1
+      sample_length: 4
+      n_steps: 8
+      img_size: 32
+      fix_wall: true
+      fix_wall_location: 16
+      fix_door_location: 10
     val:
       dataset_type: two_rooms
-      device: cuda
-      size: 10000
-      val_size: 10000
+      device: cpu
+      size: 4
+      val_size: 4
       batch_size: 1
-      sample_length: 17
-      n_steps: 91
-      img_size: 64
+      sample_length: 4
+      n_steps: 8
+      img_size: 32
       fix_wall: true
-      fix_wall_location: 32
+      fix_wall_location: 16
       fix_door_location: 10
-      normalize: true
-      cross_wall_rate: 0.1
-      expert_cross_wall_rate: 0.0
-      wall_bump_rate: 0.0
-      dup_traj_rate: 0.0
-      num_train_layouts: -1
     test: null
   collators:
-    train: null
+    train:
+      collator_type: ac_video_jepa
+      transforms: []
     val:
       collator_type: ac_video_jepa
       transforms: []
     test: null
   dataloader_configs:
-    train: null
-    val:
-      batch_size: 4
+    train:
+      batch_size: 2
       shuffle: false
       num_workers: 0
-      pin_memory: true
-      persistent_workers: false
-      drop_last: true
+      drop_last: false
+    val:
+      batch_size: 2
+      shuffle: false
+      num_workers: 0
+      drop_last: false
     test: null
 
 module:
@@ -44,19 +53,19 @@ module:
     encoder:
       encoder_type: impala
       width: 1
-      stack_sizes: [16, 32, 32]
+      stack_sizes: [4, 8, 8]
       num_blocks: 2
       dropout_rate: null
       layer_norm: false
       input_channels: 2
       final_ln: true
-      mlp_output_dim: 512
-      input_shape: [2, 64, 64]
+      mlp_output_dim: 32
+      input_shape: [2, 32, 32]
     action_encoder:
       action_encoder_type: identity
     predictor:
       predictor_type: rnn
-      hidden_size: 512
+      hidden_size: 32
       action_dim: 2
       num_layers: 1
       use_encoder_final_ln: true
@@ -66,14 +75,14 @@ module:
       hidden_multiplier: 4
     inverse_dynamics_model:
       enabled: true
-      hidden_dim: 256
+      hidden_dim: 16
       action_dim: 2
     regularizer:
       regularizer_type: vc_idm_sim
-      cov_coeff: 8.0
-      std_coeff: 16.0
-      sim_coeff_t: 12.0
-      idm_coeff: 1.0
+      cov_coeff: 0.1
+      std_coeff: 0.1
+      sim_coeff_t: 0.1
+      idm_coeff: 0.1
       std_margin: 1.0
       first_t_only: false
       spatial_as_samples: false
@@ -83,7 +92,7 @@ module:
       prediction_cost_type: square_loss_seq
       use_projector: false
   unroll_config:
-    nsteps: 8
+    nsteps: 2
     unroll_mode: autoregressive
     ctxt_window_time: 1
     return_all_steps: false
@@ -92,7 +101,7 @@ module:
     lr: 0.001
     betas: [0.9, 0.999]
     eps: 1.0e-8
-    weight_decay: 1.0e-5
+    weight_decay: 0.01
     amsgrad: false
     maximize: false
     foreach: null
@@ -103,27 +112,29 @@ module:
     enabled: false
 
 trainer:
-  accelerator: auto
+  accelerator: cpu
   devices: 1
-  precision: bf16-mixed
-  enable_checkpointing: false
+  max_steps: 2
+  limit_val_batches: 1
+  num_sanity_val_steps: 0
+  enable_checkpointing: true
   enable_model_summary: false
+  log_every_n_steps: 1
 
 loggers:
-  wandb:
-    project: htw-ac-video-jepa
-    name: ac_video_jepa_validate
-    offline: false
+  csv:
     save_dir: logs
-    dir: wandb
-    log_model: false
-    watch:
-      enabled: false
-      log: all
-      log_freq: 100
-      log_graph: true
+    name: csv
+    version: null
+    prefix: ""
+    flush_logs_every_n_steps: 1
 
-checkpoints: {}
+checkpoints:
+  last:
+    checkpoint_type: last
+    dirpath: null
+    filename: last
+    every_n_epochs: 1
 
 resume:
   enabled: false
@@ -131,28 +142,28 @@ resume:
 
 loading:
   module:
-    enabled: true
+    enabled: false
     type: lightning_module
-    checkpoint_path: ac_video_jepa/train_impala_rnn/checkpoints/last.ckpt
+    checkpoint_path: null
     strict: true
     map_location: cpu
     state_dict_key: state_dict
-    relative_to: run_root
+    relative_to: run_dir
 
 setup:
   paths:
     run_root: Octave/runs
     experiment_name: ac_video_jepa
-    run_name: validate_impala_rnn
-    existing_run_dir_policy: fail
+    run_name: debug
+    existing_run_dir_policy: overwrite
   reproducibility:
-    seed: 1
+    seed: 42
     deterministic: false
     cudnn_benchmark: false
   logger_registration:
     wandb:
-      enabled: true
-      login: true
-      mode: online
+      enabled: false
+      login: false
+      mode: disabled
       api_key_env_var: WANDB_API_KEY
       strict: true

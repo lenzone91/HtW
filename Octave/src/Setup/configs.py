@@ -4,6 +4,7 @@ DEFAULT_SETUP_CONFIG = {
         "run_root": "Octave/runs",
         "experiment_name": "ac_video_jepa",
         "run_name": "default_run",
+        "existing_run_dir_policy": "fail",
         "overwrite": False,
     },
     "reproducibility": {

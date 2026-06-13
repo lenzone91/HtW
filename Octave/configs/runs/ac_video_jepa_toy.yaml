@@ -146,7 +146,7 @@ setup:
     run_root: Octave/runs
     experiment_name: ac_video_jepa
     run_name: toy
-    overwrite: true
+    existing_run_dir_policy: overwrite
   reproducibility:
     seed: 42
     deterministic: false
