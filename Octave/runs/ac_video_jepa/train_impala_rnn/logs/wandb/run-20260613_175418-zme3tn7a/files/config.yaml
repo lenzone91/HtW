@@ -1,0 +1,67 @@
+_wandb:
+    value:
+        cli_version: 0.27.2
+        e:
+            rpfz9qjdyk8ozyeyk1acog80xgbcviec:
+                args:
+                    - C:\Users\octav\Documents\Cours\Hackathons\JEPA\HtW\Octave\configs\runs\ac_video_jepa_train.yaml
+                    - --mode
+                    - train
+                codePath: Octave\launch.py
+                codePathLocal: launch.py
+                cpu_count: 4
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "1003026903040"
+                        used: "829160628224"
+                email: octave.jne@gmail.com
+                executable: c:\Users\octav\Documents\Cours\Hackathons\JEPA\HtW\.venv312\Scripts\python.exe
+                git:
+                    commit: 4e60e6fbbb8c35c7715618d286061576fccbb6fb
+                    remote: https://github.com/lenzone91/HtW.git
+                host: DESKTOP-G5DA6P6
+                memory:
+                    total: "16872415232"
+                os: Windows-11-10.0.26200-SP0
+                program: c:\Users\octav\Documents\Cours\Hackathons\JEPA\HtW\Octave\launch.py
+                python: CPython 3.12.10
+                root: C:\Users\octav\Documents\Cours\Hackathons\JEPA\HtW\Octave\runs\ac_video_jepa\train_impala_rnn\logs
+                startedAt: "2026-06-13T15:54:18.482193Z"
+                writerId: rpfz9qjdyk8ozyeyk1acog80xgbcviec
+        m:
+            - "1": trainer/global_step
+              "6":
+                - 3
+              "7": []
+            - "2": '*'
+              "5": 1
+              "6":
+                - 1
+              "7": []
+        python_version: 3.12.10
+        t:
+            "1":
+                - 1
+                - 5
+                - 41
+                - 53
+                - 106
+            "2":
+                - 1
+                - 5
+                - 41
+                - 53
+                - 106
+            "3":
+                - 1
+                - 2
+                - 7
+                - 13
+                - 66
+            "4": 3.12.10
+            "5": 0.27.2
+            "8":
+                - 3
+            "12": 0.27.2
+            "13": windows-amd64

@@ -1,0 +1,33 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "CPython 3.12.10",
+  "startedAt": "2026-06-13T15:54:18.482193Z",
+  "args": [
+    "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\configs\\runs\\ac_video_jepa_train.yaml",
+    "--mode",
+    "train"
+  ],
+  "program": "c:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\launch.py",
+  "codePath": "Octave\\launch.py",
+  "codePathLocal": "launch.py",
+  "git": {
+    "remote": "https://github.com/lenzone91/HtW.git",
+    "commit": "4e60e6fbbb8c35c7715618d286061576fccbb6fb"
+  },
+  "email": "octave.jne@gmail.com",
+  "root": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\logs",
+  "host": "DESKTOP-G5DA6P6",
+  "executable": "c:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\.venv312\\Scripts\\python.exe",
+  "cpu_count": 4,
+  "cpu_count_logical": 8,
+  "disk": {
+    "/": {
+      "total": "1003026903040",
+      "used": "829160628224"
+    }
+  },
+  "memory": {
+    "total": "16872415232"
+  },
+  "writerId": "rpfz9qjdyk8ozyeyk1acog80xgbcviec"
+}

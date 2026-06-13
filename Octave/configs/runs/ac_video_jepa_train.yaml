@@ -2,7 +2,7 @@ datamodule:
   datasets:
     train:
       dataset_type: two_rooms
-      device: cuda
+      device: cpu
       size: 10000
       val_size: 10000
       batch_size: 1
@@ -20,7 +20,7 @@ datamodule:
       num_train_layouts: -1
     val:
       dataset_type: two_rooms
-      device: cuda
+      device: cpu
       size: 10000
       val_size: 10000
       batch_size: 1

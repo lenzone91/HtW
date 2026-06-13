@@ -5,6 +5,7 @@ from .configs import DEFAULT_SETUP_CONFIG
 from .logger_registration import setup_logger_registration
 from .paths import setup_paths
 from .reproducibility import setup_reproducibility
+from .credentials import load_user_credentials_to_env
 
 
 def setup_runtime(
@@ -22,6 +23,22 @@ def setup_runtime(
         paths_config=resolved_setup_config["paths"],
         config_path=config_path,
     )
+
+    project_root = Path(runtime_context["paths"]["project_root"])
+    credential_path = project_root / "user_credential.yaml"
+
+    if credential_path.is_file():
+        loaded_credentials = load_user_credentials_to_env(credential_path)
+        runtime_context["credentials"] = {
+            "credential_path": str(credential_path),
+            "loaded_env_vars": sorted(loaded_credentials.keys()),
+        }
+    else:
+        runtime_context["credentials"] = {
+            "credential_path": str(credential_path),
+            "loaded_env_vars": [],
+        }
+
     runtime_context["reproducibility"] = setup_reproducibility(
         resolved_setup_config["reproducibility"],
     )

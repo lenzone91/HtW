@@ -1,0 +1,37 @@
+{
+    "execution_type": "train",
+    "status": "failed",
+    "run_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn",
+    "runtime_context": {
+        "paths": {
+            "project_root": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW",
+            "run_root": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs",
+            "experiment_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa",
+            "run_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn",
+            "checkpoints_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\checkpoints",
+            "logs_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\logs",
+            "metrics_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\metrics",
+            "configs_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\configs",
+            "artifacts_dir": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\Octave\\runs\\ac_video_jepa\\train_impala_rnn\\artifacts"
+        },
+        "credentials": {
+            "credential_path": "C:\\Users\\octav\\Documents\\Cours\\Hackathons\\JEPA\\HtW\\user_credential.yaml",
+            "loaded_env_vars": []
+        },
+        "reproducibility": {
+            "seed": 1,
+            "deterministic": false,
+            "cudnn_benchmark": false
+        },
+        "logger_registration": {
+            "wandb": {
+                "enabled": true,
+                "mode": "online",
+                "login_attempted": true,
+                "api_key_env_var": "WANDB_API_KEY"
+            }
+        }
+    },
+    "outputs": null,
+    "error": "RuntimeError('DataLoader worker (pid(s) 23564) exited unexpectedly')"
+}

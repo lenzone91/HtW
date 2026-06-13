@@ -1,8 +1,7 @@
 from copy import deepcopy
 from pathlib import Path
 
-from lightning.pytorch.callbacks import ModelCheckpoint
-
+from .base import NamedModelCheckpoint
 from .configs import (
     DEFAULT_BEST_VALUE_CHECKPOINT_CONFIG,
     DEFAULT_LAST_CHECKPOINT_CONFIG,
@@ -20,7 +19,7 @@ CHECKPOINT_DEFAULTS_BY_TYPE = {
 def build_checkpoint_callbacks(
     checkpoint_configs: dict,
     runtime_context: dict | None = None,
-) -> list[ModelCheckpoint]:
+) -> list[NamedModelCheckpoint]:
     if checkpoint_configs == {}:
         return []
 
@@ -48,7 +47,7 @@ def build_checkpoint_callback(
     checkpoint_name: str,
     checkpoint_config: dict,
     runtime_context: dict | None = None,
-) -> ModelCheckpoint:
+) -> NamedModelCheckpoint:
     prepared_config = prepare_checkpoint_config(
         checkpoint_name=checkpoint_name,
         checkpoint_config=checkpoint_config,
@@ -57,21 +56,24 @@ def build_checkpoint_callback(
     checkpoint_type = prepared_config.pop("checkpoint_type")
 
     if checkpoint_type == "last":
-        return ModelCheckpoint(
+        return NamedModelCheckpoint(
+            checkpoint_name=checkpoint_name,
             save_last=True,
             save_top_k=0,
             **prepared_config,
         )
 
     if checkpoint_type == "periodic":
-        return ModelCheckpoint(
+        return NamedModelCheckpoint(
+            checkpoint_name=checkpoint_name,
             save_last=False,
             save_top_k=-1,
             **prepared_config,
         )
 
     if checkpoint_type == "best_value":
-        return ModelCheckpoint(
+        return NamedModelCheckpoint(
+            checkpoint_name=checkpoint_name,
             save_last=False,
             **prepared_config,
         )
@@ -84,6 +86,12 @@ def prepare_checkpoint_config(
     checkpoint_config: dict,
     runtime_context: dict | None = None,
 ) -> dict:
+    if not isinstance(checkpoint_name, str) or checkpoint_name.strip() == "":
+        raise TypeError(
+            "Checkpoint name must be a non-empty string, "
+            f"got {checkpoint_name!r}."
+        )
+
     if not isinstance(checkpoint_config, dict):
         raise TypeError(
             f"Checkpoint config '{checkpoint_name}' must be a dictionary, "
