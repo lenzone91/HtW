@@ -150,6 +150,16 @@ loggers:
       log: all
       log_freq: 100
       log_graph: true
+    metrics:
+      enabled: true
+      define_metrics: true
+      direct_log: true
+      step_metric: trainer/global_step
+      metric_patterns:
+        - train/*
+        - val/*
+        - test/*
+      require_wandb_logger: true
 
 checkpoints:
   last:

@@ -3,6 +3,7 @@ from Octave.src.Execution.factory import (
     build_trainer,
     build_training_objects,
     build_validation_objects,
+    get_trainer_loggers,
 )
 
 
@@ -92,7 +93,15 @@ def test_build_training_objects_delegates_to_subsystem_factories(monkeypatch) ->
         "module": module,
         "datamodule": datamodule,
     }
-    assert watch_calls == [(module, trainer.logger, {})]
+    assert watch_calls == [(module, [], {})]
+
+
+def test_get_trainer_loggers_prefers_trainer_loggers() -> None:
+    class TrainerWithLoggers:
+        logger = "first"
+        loggers = ["first", "second"]
+
+    assert get_trainer_loggers(TrainerWithLoggers()) == ["first", "second"]
 
 
 def test_build_validation_objects_loads_module_if_configured(monkeypatch) -> None:

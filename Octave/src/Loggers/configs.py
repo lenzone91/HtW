@@ -16,6 +16,16 @@ DEFAULT_WANDB_WATCH_CONFIG = {
 }
 
 
+DEFAULT_WANDB_METRICS_CONFIG = {
+    "enabled": True,
+    "define_metrics": True,
+    "direct_log": True,
+    "step_metric": "trainer/global_step",
+    "metric_patterns": ["train/*", "val/*", "test/*"],
+    "require_wandb_logger": True,
+}
+
+
 DEFAULT_WANDB_LOGGER_CONFIG = {
     "logger_type": "wandb",
     "name": None,
@@ -32,6 +42,7 @@ DEFAULT_WANDB_LOGGER_CONFIG = {
     "checkpoint_name": None,
     "add_file_policy": "mutable",
     "watch": DEFAULT_WANDB_WATCH_CONFIG,
+    "metrics": DEFAULT_WANDB_METRICS_CONFIG,
 }
 
 

@@ -1,14 +1,22 @@
 from pathlib import Path
 
 import pytest
+import torch
 from lightning.pytorch.loggers import CSVLogger, WandbLogger
 
 from Octave.src.Loggers import factory as logger_factory
+from Octave.src.Loggers import wandb_metrics
 from Octave.src.Loggers.factory import (
+    build_logger_callbacks,
     build_loggers,
+    get_wandb_metrics_config,
     get_wandb_watch_config,
     resolve_logger_path,
     watch_module_with_wandb_loggers,
+)
+from Octave.src.Loggers.wandb_metrics import (
+    WandbScalarMetricsCallback,
+    collect_prefixed_scalar_metrics,
 )
 
 
@@ -97,6 +105,29 @@ def test_get_wandb_watch_config_merges_defaults() -> None:
     }
 
 
+def test_get_wandb_metrics_config_merges_defaults() -> None:
+    metrics_config = get_wandb_metrics_config(
+        {
+            "wandb": {
+                "metrics": {
+                    "enabled": True,
+                    "direct_log": False,
+                    "metric_patterns": ["train/*"],
+                },
+            },
+        }
+    )
+
+    assert metrics_config == {
+        "enabled": True,
+        "define_metrics": True,
+        "direct_log": False,
+        "step_metric": "trainer/global_step",
+        "metric_patterns": ["train/*"],
+        "require_wandb_logger": True,
+    }
+
+
 def test_watch_module_with_wandb_loggers_delegates_to_wandb_logger(monkeypatch) -> None:
     class FakeWandbLogger:
         def __init__(self) -> None:
@@ -135,6 +166,116 @@ def test_watch_module_with_wandb_loggers_delegates_to_wandb_logger(monkeypatch) 
     ]
 
 
+def test_build_logger_callbacks_builds_wandb_metrics_callback() -> None:
+    callbacks = build_logger_callbacks(
+        {
+            "wandb": {
+                "metrics": {
+                    "enabled": True,
+                    "direct_log": True,
+                },
+            },
+        }
+    )
+
+    assert len(callbacks) == 1
+    assert isinstance(callbacks[0], WandbScalarMetricsCallback)
+
+
+def test_wandb_metrics_callback_defines_metric_patterns(monkeypatch) -> None:
+    class FakeWandbLogger:
+        def __init__(self) -> None:
+            self.experiment = FakeExperiment()
+
+    class FakeExperiment:
+        def __init__(self) -> None:
+            self.defined_metrics = []
+
+        def define_metric(self, *args, **kwargs) -> None:
+            self.defined_metrics.append((args, kwargs))
+
+    class FakeTrainer:
+        def __init__(self) -> None:
+            self.loggers = [FakeWandbLogger()]
+
+    monkeypatch.setattr(wandb_metrics, "WandbLogger", FakeWandbLogger)
+
+    callback = WandbScalarMetricsCallback(
+        define_metrics=True,
+        direct_log=False,
+        metric_patterns=["train/*"],
+    )
+    trainer = FakeTrainer()
+
+    callback.on_fit_start(trainer=trainer, pl_module=None)
+
+    assert trainer.loggers[0].experiment.defined_metrics == [
+        (("trainer/global_step",), {}),
+        (("train/*",), {"step_metric": "trainer/global_step"}),
+    ]
+
+
+def test_wandb_metrics_callback_logs_scalar_metrics(monkeypatch) -> None:
+    class FakeWandbLogger:
+        def __init__(self) -> None:
+            self.experiment = FakeExperiment()
+
+    class FakeExperiment:
+        def __init__(self) -> None:
+            self.logged_metrics = []
+
+        def log(self, metrics: dict) -> None:
+            self.logged_metrics.append(metrics)
+
+    class FakeTrainer:
+        def __init__(self) -> None:
+            self.global_step = 3
+            self.loggers = [FakeWandbLogger()]
+            self.logged_metrics = {
+                "train/loss": torch.tensor(1.5),
+                "train/vector": torch.tensor([1.0, 2.0]),
+                "val/loss": torch.tensor(2.5),
+            }
+            self.callback_metrics = {
+                "train/pred_loss": 0.25,
+            }
+
+    monkeypatch.setattr(wandb_metrics, "WandbLogger", FakeWandbLogger)
+
+    callback = WandbScalarMetricsCallback(
+        define_metrics=False,
+        direct_log=True,
+    )
+    trainer = FakeTrainer()
+
+    callback.log_scalar_metrics(trainer=trainer, prefixes=("train/",))
+
+    assert trainer.loggers[0].experiment.logged_metrics == [
+        {
+            "train/loss": 1.5,
+            "train/pred_loss": 0.25,
+            "trainer/global_step": 3,
+        }
+    ]
+
+
+def test_collect_prefixed_scalar_metrics_ignores_non_scalars() -> None:
+    class FakeTrainer:
+        logged_metrics = {
+            "train/loss": torch.tensor(1.0),
+            "train/vector": torch.tensor([1.0, 2.0]),
+            "other/loss": torch.tensor(3.0),
+        }
+        callback_metrics = {}
+
+    metrics = collect_prefixed_scalar_metrics(
+        trainer=FakeTrainer(),
+        prefixes=("train/",),
+    )
+
+    assert metrics == {"train/loss": 1.0}
+
+
 def test_build_loggers_rejects_unknown_logger() -> None:
     with pytest.raises(KeyError, match="Unknown logger"):
         build_loggers(logger_configs={"unknown": {}})
@@ -146,6 +287,19 @@ def test_build_loggers_rejects_unknown_wandb_watch_key() -> None:
             logger_configs={
                 "wandb": {
                     "watch": {
+                        "unknown": 1,
+                    },
+                },
+            }
+        )
+
+
+def test_build_loggers_rejects_unknown_wandb_metrics_key() -> None:
+    with pytest.raises(KeyError, match="Unknown wandb metrics config keys"):
+        build_loggers(
+            logger_configs={
+                "wandb": {
+                    "metrics": {
                         "unknown": 1,
                     },
                 },

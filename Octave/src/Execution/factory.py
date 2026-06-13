@@ -3,7 +3,11 @@ from copy import deepcopy
 from lightning.pytorch import Trainer
 
 from ..Data.DataModules.factory import build_ac_video_jepa_datamodule
-from ..Loggers.factory import build_loggers, watch_module_with_wandb_loggers
+from ..Loggers.factory import (
+    build_logger_callbacks,
+    build_loggers,
+    watch_module_with_wandb_loggers,
+)
 from ..Models.Loading.factory import load_module_if_needed
 from ..Models.Modules.factory import build_ac_video_jepa_module
 from ..Training.Checkpoints.factory import build_checkpoint_callbacks
@@ -29,7 +33,7 @@ def build_training_objects(
     )
     watch_module_with_wandb_loggers(
         module=module,
-        loggers=trainer.logger,
+        loggers=get_trainer_loggers(trainer),
         logger_configs=config.get("loggers", {}),
     )
 
@@ -79,9 +83,25 @@ def build_trainer(
         checkpoint_configs=checkpoint_configs,
         runtime_context=runtime_context,
     )
+    callbacks.extend(build_logger_callbacks(logger_configs=logger_configs))
 
     return Trainer(
         logger=loggers,
         callbacks=callbacks,
         **trainer_kwargs,
     )
+
+
+def get_trainer_loggers(trainer) -> list:
+    loggers = getattr(trainer, "loggers", None)
+    if loggers is not None:
+        return loggers
+
+    logger = getattr(trainer, "logger", None)
+    if logger is None or logger is False:
+        return []
+
+    if isinstance(logger, list):
+        return logger
+
+    return [logger]

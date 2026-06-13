@@ -33,6 +33,9 @@ def test_ac_video_jepa_train_config_enables_wandb_and_checkpoints() -> None:
     assert config["loggers"]["wandb"]["offline"] is False
     assert config["loggers"]["wandb"]["watch"]["enabled"] is True
     assert config["loggers"]["wandb"]["watch"]["log"] == "all"
+    assert config["loggers"]["wandb"]["metrics"]["enabled"] is True
+    assert config["loggers"]["wandb"]["metrics"]["define_metrics"] is True
+    assert config["loggers"]["wandb"]["metrics"]["direct_log"] is True
     assert set(config["checkpoints"]) == {
         "last",
         "periodic",

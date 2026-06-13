@@ -6,8 +6,10 @@ from lightning.pytorch.loggers import CSVLogger, WandbLogger
 from .configs import (
     DEFAULT_CSV_LOGGER_CONFIG,
     DEFAULT_WANDB_LOGGER_CONFIG,
+    DEFAULT_WANDB_METRICS_CONFIG,
     DEFAULT_WANDB_WATCH_CONFIG,
 )
+from .wandb_metrics import WandbScalarMetricsCallback
 
 
 LOGGER_REGISTRY = {
@@ -66,6 +68,7 @@ def build_logger(
     )
     prepared_config.pop("logger_type", None)
     prepared_config.pop("watch", None)
+    prepared_config.pop("metrics", None)
 
     return logger_class(**prepared_config)
 
@@ -95,6 +98,10 @@ def prepare_logger_config(
 
     prepared_config.update(user_config)
     prepared_config = prepare_wandb_watch_config(
+        logger_name=logger_name,
+        prepared_config=prepared_config,
+    )
+    prepared_config = prepare_wandb_metrics_config(
         logger_name=logger_name,
         prepared_config=prepared_config,
     )
@@ -133,6 +140,70 @@ def prepare_wandb_watch_config(
     prepared_config["watch"] = prepared_watch_config
 
     return prepared_config
+
+
+def prepare_wandb_metrics_config(
+    logger_name: str,
+    prepared_config: dict,
+) -> dict:
+    if logger_name != "wandb":
+        return prepared_config
+
+    metrics_config = prepared_config.get("metrics", {})
+    if metrics_config is None:
+        metrics_config = {"enabled": False}
+
+    if not isinstance(metrics_config, dict):
+        raise TypeError(
+            "Wandb metrics config must be a dictionary, "
+            f"got {type(metrics_config).__name__}."
+        )
+
+    unknown_keys = set(metrics_config) - set(DEFAULT_WANDB_METRICS_CONFIG)
+    if unknown_keys:
+        raise KeyError(
+            "Unknown wandb metrics config keys: "
+            f"{sorted(unknown_keys)}. "
+            f"Allowed keys are: {sorted(DEFAULT_WANDB_METRICS_CONFIG)}."
+        )
+
+    prepared_metrics_config = deepcopy(DEFAULT_WANDB_METRICS_CONFIG)
+    prepared_metrics_config.update(metrics_config)
+    prepared_config["metrics"] = prepared_metrics_config
+
+    return prepared_config
+
+
+def build_logger_callbacks(logger_configs: dict) -> list:
+    metrics_config = get_wandb_metrics_config(logger_configs)
+
+    if not metrics_config["enabled"]:
+        return []
+
+    callback_config = deepcopy(metrics_config)
+    callback_config.pop("enabled")
+    return [WandbScalarMetricsCallback(**callback_config)]
+
+
+def get_wandb_metrics_config(logger_configs: dict) -> dict:
+    if not isinstance(logger_configs, dict):
+        raise TypeError(
+            "Logger configs must be a dictionary, "
+            f"got {type(logger_configs).__name__}."
+        )
+
+    wandb_config = logger_configs.get("wandb")
+    if wandb_config is None:
+        return {**deepcopy(DEFAULT_WANDB_METRICS_CONFIG), "enabled": False}
+
+    default_config = deepcopy(DEFAULT_WANDB_LOGGER_CONFIG)
+    prepared_config = prepare_logger_config(
+        logger_name="wandb",
+        logger_config=wandb_config,
+        default_config=default_config,
+        runtime_context=None,
+    )
+    return prepared_config["metrics"]
 
 
 def watch_module_with_wandb_loggers(
