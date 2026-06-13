@@ -1,0 +1,19 @@
+[project]
+name = "multiroom-jepa"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["eb_jepa"]
+
+[tool.uv.sources]
+eb_jepa = { workspace = true }
+
+[tool.uv.workspace]
+members = ["eb_jepa"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["environments*"]
