@@ -1,6 +1,0 @@
-source_separation: 
-  "path": "C:/Users/octav/Documents/Cours/ENS/Maths/MVA/Stage/Dev/Datasets/Toy/val"
-  "path_key": null
-  "canonical_dtype": "float32"
-  "load_on_demand": False
-  "normalize_by_mixture_peak": True

@@ -1,5 +1,0 @@
-setup:
-  seed: 456
-
-trainer:
-  max_epochs: 5

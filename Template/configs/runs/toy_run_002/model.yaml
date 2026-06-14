@@ -1,5 +1,0 @@
-waveunet:
-  Fc: 4
-  fd: 5
-  fu: 5
-  L: 2
