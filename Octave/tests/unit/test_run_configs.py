@@ -76,13 +76,13 @@ def test_run_configs_use_safe_cuda_dataloader_settings() -> None:
 
 def test_ac_video_jepa_train_config_matches_ac_model_contract() -> None:
     config = load_run_config("ac_video_jepa_train.yaml")
-    blocks_config = config["module"]["blocks_config"]
+    components_config = config["module"]["components_config"]
     rollout_config = config["module"]["rollout_config"]
     objective_config = config["module"]["objective_config"]
 
-    assert blocks_config["model_type"] == "ac_video_jepa"
-    assert blocks_config["encoder"]["encoder_type"] == "impala"
-    assert blocks_config["predictor"]["predictor_type"] == "rnn"
+    assert components_config["model_type"] == "ac_video_jepa"
+    assert components_config["encoder"]["encoder_type"] == "impala"
+    assert components_config["predictor"]["predictor_type"] == "rnn"
     assert rollout_config["rollout_type"] == "latent"
     assert rollout_config["nsteps"] == 8
     assert objective_config["objective_type"] == "ac_video_jepa"

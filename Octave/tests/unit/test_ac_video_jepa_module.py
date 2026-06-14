@@ -5,18 +5,24 @@ import torch
 
 from Octave.src.Metrics.configs import DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG
 from Octave.src.Metrics.factory import build_ac_video_jepa_objective
-from Octave.src.Models.Model.ac_video_jepa.configs import DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG
-from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
+from Octave.src.Models.Model.ac_video_jepa.configs import (
+    DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG,
+)
+from Octave.src.Models.Model.ac_video_jepa.factory import (
+    build_ac_video_jepa_components,
+)
 from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.src.Models.Modules.configs import DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG
 from Octave.src.Models.Modules.factory import build_ac_video_jepa_module
 from Octave.src.Rollouts.configs import DEFAULT_LATENT_ROLLOUT_CONFIG
 from Octave.src.Rollouts.factory import build_latent_rollout
 from Octave.src.Training.Optimization.configs import DEFAULT_ADAMW_CONFIG
+from Octave.src.Training.Optimization.factory import build_optimizer_builder
+from Octave.src.Training.Schedulers.factory import build_scheduler_builder
 
 
-def make_tiny_blocks_config() -> dict:
-    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG)
+def make_tiny_components_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG)
     config["encoder"].update(
         {
             "stack_sizes": [4, 8, 8],
@@ -78,27 +84,32 @@ def make_batch() -> dict:
 
 
 def make_module() -> AcVideoJepaModule:
-    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    components = build_ac_video_jepa_components(config=make_tiny_components_config())
     rollout = build_latent_rollout(config=make_rollout_config())
     objective = build_ac_video_jepa_objective(
         config=make_tiny_objective_config(),
-        encoder_shape=blocks.encoder_shape,
+        encoder_shape=components["encoder_shape"],
     )
     optimizer_config = deepcopy(DEFAULT_ADAMW_CONFIG)
     optimizer_config["lr"] = 1e-3
+    optimizer_builder = build_optimizer_builder(optimizer_config=optimizer_config)
+    scheduler_builder = build_scheduler_builder(scheduler_config={"enabled": False})
 
     return AcVideoJepaModule(
-        blocks=blocks,
+        encoder=components["encoder"],
+        action_encoder=components["action_encoder"],
+        predictor=components["predictor"],
+        encoder_shape=components["encoder_shape"],
         rollout=rollout,
         objective=objective,
-        optimizer_config=optimizer_config,
-        scheduler_config={"enabled": False},
+        optimizer_builder=optimizer_builder,
+        scheduler_builder=scheduler_builder,
     )
 
 
 def make_tiny_module_config() -> dict:
     config = deepcopy(DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG)
-    config["blocks_config"] = make_tiny_blocks_config()
+    config["components_config"] = make_tiny_components_config()
     config["rollout_config"] = make_rollout_config()
     config["objective_config"] = make_tiny_objective_config()
     config["optimizer_config"]["lr"] = 1e-3
@@ -196,7 +207,7 @@ def test_ac_video_jepa_module_configure_optimizers_returns_optimizer() -> None:
 
 def test_ac_video_jepa_module_configure_optimizers_returns_scheduler_dict() -> None:
     module = make_module()
-    module.scheduler_config = {
+    module.scheduler_builder = build_scheduler_builder(scheduler_config={
         "enabled": True,
         "scheduler_type": "step_lr",
         "step_size": 1,
@@ -207,7 +218,7 @@ def test_ac_video_jepa_module_configure_optimizers_returns_scheduler_dict() -> N
         "monitor": None,
         "strict": True,
         "name": None,
-    }
+    })
 
     optimizer_config = module.configure_optimizers()
 
@@ -241,7 +252,7 @@ def test_build_ac_video_jepa_module_builds_module_from_plain_config() -> None:
 
     assert isinstance(module, AcVideoJepaModule)
     assert module.rollout.nsteps == 2
-    assert module.blocks.encoder_shape["feature_dim"] == 32
+    assert module.encoder_shape["feature_dim"] == 32
 
 
 def test_build_ac_video_jepa_module_does_not_mutate_input_config() -> None:

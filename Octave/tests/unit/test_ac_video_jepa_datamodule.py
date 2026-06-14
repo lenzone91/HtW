@@ -165,6 +165,18 @@ def test_build_ac_video_jepa_datamodule_rejects_unknown_top_level_key() -> None:
         build_ac_video_jepa_datamodule(config=config)
 
 
+def test_build_ac_video_jepa_datamodule_passes_strict_to_collator_factory() -> None:
+    config = make_tiny_datamodule_config()
+    config["collators"]["train"] = {
+        **config["collators"]["train"],
+        "unknown": "ignored",
+    }
+
+    datamodule = build_ac_video_jepa_datamodule(config=config, strict=False)
+
+    assert isinstance(datamodule.collators["train"], AcVideoJepaCollator)
+
+
 def test_build_ac_video_jepa_datamodule_rejects_unknown_phase() -> None:
     config = make_tiny_datamodule_config()
     config["datasets"]["predict"] = None

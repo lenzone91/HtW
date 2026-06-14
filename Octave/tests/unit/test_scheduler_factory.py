@@ -4,7 +4,11 @@ import pytest
 import torch
 
 from Octave.src.Training.Schedulers.configs import DEFAULT_STEP_LR_CONFIG
-from Octave.src.Training.Schedulers.factory import build_scheduler
+from Octave.src.Training.Schedulers.factory import (
+    ConfiguredSchedulerBuilder,
+    build_scheduler,
+    build_scheduler_builder,
+)
 
 
 def make_optimizer() -> torch.optim.Optimizer:
@@ -34,6 +38,16 @@ def test_build_scheduler_builds_lightning_scheduler_dict() -> None:
     assert isinstance(scheduler_config["scheduler"], torch.optim.lr_scheduler.StepLR)
     assert scheduler_config["interval"] == "epoch"
     assert scheduler_config["frequency"] == 1
+
+
+def test_build_scheduler_builder_returns_configured_callable() -> None:
+    config = deepcopy(DEFAULT_STEP_LR_CONFIG)
+
+    scheduler_builder = build_scheduler_builder(scheduler_config=config)
+    scheduler_config = scheduler_builder(make_optimizer())
+
+    assert isinstance(scheduler_builder, ConfiguredSchedulerBuilder)
+    assert isinstance(scheduler_config["scheduler"], torch.optim.lr_scheduler.StepLR)
 
 
 def test_build_scheduler_does_not_mutate_input_config() -> None:

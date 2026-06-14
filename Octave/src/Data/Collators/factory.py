@@ -95,11 +95,12 @@ class CollatorBuilder:
 
 def build_ac_video_jepa_collator(
     config: dict | None = None,
+    strict: bool = True,
 ) -> AcVideoJepaCollator:
-    builder = CollatorBuilder()
+    builder = CollatorBuilder(strict=strict)
     return builder(config=config or DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG)
 
 
-def build_collator(config: dict) -> AcVideoJepaCollator:
-    builder = CollatorBuilder()
+def build_collator(config: dict, strict: bool = True) -> AcVideoJepaCollator:
+    builder = CollatorBuilder(strict=strict)
     return builder(config=config)

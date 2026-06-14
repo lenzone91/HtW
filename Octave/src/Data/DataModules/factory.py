@@ -125,7 +125,10 @@ class AcVideoJepaDataModuleBuilder:
                 collators[phase] = None
                 continue
 
-            collators[phase] = build_collator(config=collator_config)
+            collators[phase] = build_collator(
+                config=collator_config,
+                strict=self.strict,
+            )
 
         return collators
 

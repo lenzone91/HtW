@@ -79,7 +79,7 @@ class TwoRoomsDatasetBuilder:
 
 
 DATASET_BUILDERS_REGISTRY = {
-    "two_rooms": TwoRoomsDatasetBuilder(),
+    "two_rooms": TwoRoomsDatasetBuilder,
 }
 
 
@@ -113,8 +113,8 @@ def build_datasets(
                 f"Available datasets are: {sorted(DATASET_BUILDERS_REGISTRY)}."
             )
 
-        builder = DATASET_BUILDERS_REGISTRY[dataset_name]
-        builder.strict = strict
+        builder_class = DATASET_BUILDERS_REGISTRY[dataset_name]
+        builder = builder_class(strict=strict)
         datasets[dataset_name] = builder(
             config=dataset_config,
             runtime_context=runtime_context,

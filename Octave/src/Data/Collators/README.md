@@ -89,6 +89,9 @@ The collator factory receives plain dictionaries:
 `transforms` currently accepts already-built transform objects. A transform
 factory can be added later when transform configs are needed.
 
+The factory accepts `strict` from callers so higher-level factories can keep
+validation behavior consistent across child construction.
+
 ## Extension Steps
 
 1. Add the collator class.

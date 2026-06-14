@@ -18,14 +18,17 @@ from Octave.src.Metrics.factory import build_ac_video_jepa_objective
 from Octave.src.Metrics.loss import WeightedMetricLoss
 from Octave.src.Metrics.metric_set import AcVideoJepaMetricSet
 from Octave.src.Models.Model.ac_video_jepa.configs import (
-    DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG,
+    DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG,
 )
-from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
+from Octave.src.Models.Model.ac_video_jepa.factory import (
+    build_ac_video_jepa_components,
+)
+from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.src.Rollouts.latent_rollout import LatentRollout
 
 
-def make_tiny_blocks_config() -> dict:
-    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG)
+def make_tiny_components_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG)
     config["encoder"].update(
         {
             "stack_sizes": [4, 8, 8],
@@ -63,17 +66,27 @@ def make_tiny_objective_config() -> dict:
 
 
 def make_rollout_output():
-    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    components = build_ac_video_jepa_components(config=make_tiny_components_config())
     rollout = LatentRollout(
         nsteps=2,
         unroll_mode="autoregressive",
         ctxt_window_time=1,
     )
+    jepa = AcVideoJepaModule(
+        encoder=components["encoder"],
+        action_encoder=components["action_encoder"],
+        predictor=components["predictor"],
+        encoder_shape=components["encoder_shape"],
+        rollout=rollout,
+        objective=torch.nn.Identity(),
+        optimizer_builder=lambda parameters: torch.optim.AdamW(parameters, lr=1e-3),
+        scheduler_builder=lambda optimizer: None,
+    )
     return rollout(
-        blocks=blocks,
+        jepa=jepa,
         observations=torch.randn(2, 2, 4, 32, 32),
         actions=torch.randn(2, 2, 4),
-    ), blocks.encoder_shape
+    ), components["encoder_shape"]
 
 
 def test_build_ac_video_jepa_objective_builds_from_plain_config() -> None:

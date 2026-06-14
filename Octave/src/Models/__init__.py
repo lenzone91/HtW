@@ -1,1 +1,1 @@
-"""Model-side runtime packages for the AcVideoJepa migration."""
+"""Model-side runtime packages for AcVideoJepa."""

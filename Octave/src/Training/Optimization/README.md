@@ -11,6 +11,7 @@ This folder owns optimizer construction for Octave.
 `factory.py`
 
 - builds PyTorch optimizers from plain dictionaries;
+- builds configured optimizer builder objects for Lightning modules;
 - validates optimizer type and config keys.
 
 ## Subsystem Contract
@@ -21,6 +22,8 @@ This subsystem may:
 
 - map optimizer config names to PyTorch optimizer classes;
 - attach parameters supplied by a caller;
+- expose configured callable builders for modules whose parameters are only
+  available inside `configure_optimizers`;
 - reject unknown optimizer keys early.
 
 This subsystem must not:
@@ -43,6 +46,10 @@ Optimizer configs use:
 ```
 
 Schedulers are owned by `../Schedulers`.
+
+`build_optimizer_builder` returns an already-configured callable object. A
+Lightning module may call that object with `self.parameters()`, but it does not
+own config parsing.
 
 ## Extension Steps
 

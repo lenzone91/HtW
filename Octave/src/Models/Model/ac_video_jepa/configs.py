@@ -1,7 +1,4 @@
-from copy import deepcopy
-
-
-DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG = {
+DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG = {
     "model_type": "ac_video_jepa",
     "encoder": {
         "encoder_type": "impala",
@@ -24,36 +21,5 @@ DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG = {
         "action_dim": 2,
         "num_layers": 1,
         "use_encoder_final_ln": True,
-    },
-}
-
-
-DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG = {
-    **deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG),
-    "projector": {
-        "enabled": False,
-        "mlp_spec": None,
-        "hidden_multiplier": 4,
-    },
-    "inverse_dynamics_model": {
-        "enabled": True,
-        "hidden_dim": 256,
-        "action_dim": 2,
-    },
-    "regularizer": {
-        "regularizer_type": "vc_idm_sim",
-        "cov_coeff": 8.0,
-        "std_coeff": 16.0,
-        "sim_coeff_t": 12.0,
-        "idm_coeff": 1.0,
-        "std_margin": 1.0,
-        "first_t_only": False,
-        "spatial_as_samples": False,
-        "sim_t_after_proj": False,
-        "idm_after_proj": False,
-    },
-    "prediction_cost": {
-        "prediction_cost_type": "square_loss_seq",
-        "use_projector": False,
     },
 }

@@ -34,6 +34,48 @@ SCHEDULER_REGISTRY = {
 }
 
 
+class ConfiguredSchedulerBuilder:
+    """
+    Callable scheduler construction policy built from a plain config.
+    """
+
+    def __init__(self, scheduler_config: dict | None) -> None:
+        self.enabled = is_scheduler_enabled(scheduler_config)
+        if not self.enabled:
+            self.scheduler_class = None
+            self.scheduler_kwargs = {}
+            self.lightning_config = {}
+            return
+
+        prepared_config = prepare_scheduler_config(scheduler_config)
+        scheduler_type = prepared_config.pop("scheduler_type")
+        self.scheduler_class, _ = SCHEDULER_REGISTRY[scheduler_type]
+
+        lightning_config = {
+            key: prepared_config.pop(key)
+            for key in LIGHTNING_SCHEDULER_KEYS
+        }
+        self.lightning_config = {
+            key: value
+            for key, value in lightning_config.items()
+            if value is not None
+        }
+        self.scheduler_kwargs = prepared_config
+
+    def __call__(self, optimizer: torch.optim.Optimizer) -> dict | None:
+        if not self.enabled:
+            return None
+
+        scheduler = self.scheduler_class(
+            optimizer,
+            **deepcopy(self.scheduler_kwargs),
+        )
+        return {
+            "scheduler": scheduler,
+            **deepcopy(self.lightning_config),
+        }
+
+
 def build_scheduler(
     optimizer: torch.optim.Optimizer,
     scheduler_config: dict | None,
@@ -41,28 +83,14 @@ def build_scheduler(
     """
     Build a Lightning-compatible scheduler dictionary.
     """
-    if not is_scheduler_enabled(scheduler_config):
-        return None
+    scheduler_builder = build_scheduler_builder(scheduler_config=scheduler_config)
+    return scheduler_builder(optimizer)
 
-    prepared_config = prepare_scheduler_config(scheduler_config)
-    scheduler_type = prepared_config.pop("scheduler_type")
-    scheduler_class, _ = SCHEDULER_REGISTRY[scheduler_type]
 
-    lightning_config = {
-        key: prepared_config.pop(key)
-        for key in LIGHTNING_SCHEDULER_KEYS
-    }
-    lightning_config = {
-        key: value
-        for key, value in lightning_config.items()
-        if value is not None
-    }
-
-    scheduler = scheduler_class(optimizer, **prepared_config)
-    return {
-        "scheduler": scheduler,
-        **lightning_config,
-    }
+def build_scheduler_builder(
+    scheduler_config: dict | None,
+) -> ConfiguredSchedulerBuilder:
+    return ConfiguredSchedulerBuilder(scheduler_config=scheduler_config)
 
 
 def is_scheduler_enabled(scheduler_config: dict | None) -> bool:

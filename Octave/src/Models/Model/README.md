@@ -1,18 +1,18 @@
 # Model README
 
-This folder owns architecture block construction for AcVideoJepa.
+This folder owns architecture component construction for AcVideoJepa.
 
 ## Folder Roles
 
 `ac_video_jepa/`
 
-- builds AcVideoJepa encoder, action encoder, and predictor blocks;
+- builds AcVideoJepa encoder, action encoder, and predictor components;
 - wraps EB-JEPA architecture implementations;
-- exposes config-driven block factories.
+- exposes config-driven component factories.
 
 ## Ownership Rules
 
-Model code owns architecture block construction.
+Model code owns architecture component construction.
 
 Rollout code owns latent dynamics unrolling.
 

@@ -1,1 +1,1 @@
-"""Main Octave source package for the AcVideoJepa migration."""
+"""Main Octave source package for AcVideoJepa."""

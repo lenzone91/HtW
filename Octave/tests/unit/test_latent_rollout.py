@@ -4,11 +4,13 @@ import pytest
 import torch
 from torch import nn
 
-from Octave.src.Models.Model.ac_video_jepa.blocks import AcVideoJepaBlocks
 from Octave.src.Models.Model.ac_video_jepa.configs import (
-    DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG,
+    DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG,
 )
-from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
+from Octave.src.Models.Model.ac_video_jepa.factory import (
+    build_ac_video_jepa_components,
+)
+from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.src.Rollouts.configs import DEFAULT_LATENT_ROLLOUT_CONFIG
 from Octave.src.Rollouts.factory import build_latent_rollout
 from Octave.src.Rollouts.latent_rollout import LatentRollout, LatentRolloutOutput
@@ -31,8 +33,37 @@ class AddOnePredictor(nn.Module):
         return states + 1.0
 
 
-def make_tiny_blocks_config() -> dict:
-    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG)
+class FakeJepaRuntime(nn.Module):
+    def __init__(
+        self,
+        encoder: nn.Module,
+        action_encoder: nn.Module,
+        predictor: nn.Module,
+    ) -> None:
+        super().__init__()
+        self.encoder = encoder
+        self.action_encoder = action_encoder
+        self.predictor = predictor
+
+    def encode(self, observations: torch.Tensor) -> torch.Tensor:
+        return self.encoder(observations)
+
+    def encode_actions(self, actions: torch.Tensor | None) -> torch.Tensor | None:
+        if actions is None:
+            return None
+
+        return self.action_encoder(actions)
+
+    def predict(
+        self,
+        states: torch.Tensor,
+        actions: torch.Tensor | None,
+    ) -> torch.Tensor:
+        return self.predictor(states, actions)
+
+
+def make_tiny_components_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG)
     config["encoder"].update(
         {
             "stack_sizes": [4, 8, 8],
@@ -50,17 +81,36 @@ def make_tiny_blocks_config() -> dict:
     return config
 
 
-def make_parallel_blocks() -> AcVideoJepaBlocks:
-    return AcVideoJepaBlocks(
+def make_parallel_runtime() -> FakeJepaRuntime:
+    return FakeJepaRuntime(
         encoder=IdentityEncoder(),
         action_encoder=nn.Identity(),
         predictor=AddOnePredictor(),
-        encoder_shape={"feature_dim": 2, "height": 3, "width": 3},
+    )
+
+
+def make_tiny_runtime():
+    components = build_ac_video_jepa_components(config=make_tiny_components_config())
+    rollout = LatentRollout(
+        nsteps=2,
+        unroll_mode="autoregressive",
+        ctxt_window_time=1,
+        return_all_steps=False,
+    )
+    return AcVideoJepaModule(
+        encoder=components["encoder"],
+        action_encoder=components["action_encoder"],
+        predictor=components["predictor"],
+        encoder_shape=components["encoder_shape"],
+        rollout=rollout,
+        objective=nn.Identity(),
+        optimizer_builder=lambda parameters: torch.optim.AdamW(parameters, lr=1e-3),
+        scheduler_builder=lambda optimizer: None,
     )
 
 
 def test_latent_rollout_autoregressive_returns_expected_shape() -> None:
-    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    jepa = make_tiny_runtime()
     rollout = LatentRollout(
         nsteps=2,
         unroll_mode="autoregressive",
@@ -69,7 +119,7 @@ def test_latent_rollout_autoregressive_returns_expected_shape() -> None:
     )
 
     output = rollout(
-        blocks=blocks,
+        jepa=jepa,
         observations=torch.randn(2, 2, 4, 32, 32),
         actions=torch.randn(2, 2, 4),
     )
@@ -86,7 +136,7 @@ def test_latent_rollout_autoregressive_returns_expected_shape() -> None:
 
 
 def test_latent_rollout_autoregressive_returns_all_steps() -> None:
-    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    jepa = make_tiny_runtime()
     rollout = LatentRollout(
         nsteps=2,
         unroll_mode="autoregressive",
@@ -95,7 +145,7 @@ def test_latent_rollout_autoregressive_returns_all_steps() -> None:
     )
 
     output = rollout(
-        blocks=blocks,
+        jepa=jepa,
         observations=torch.randn(2, 2, 4, 32, 32),
         actions=torch.randn(2, 2, 4),
     )
@@ -107,7 +157,7 @@ def test_latent_rollout_autoregressive_returns_all_steps() -> None:
 
 
 def test_latent_rollout_autoregressive_rejects_too_many_steps() -> None:
-    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    jepa = make_tiny_runtime()
     rollout = LatentRollout(
         nsteps=5,
         unroll_mode="autoregressive",
@@ -116,7 +166,7 @@ def test_latent_rollout_autoregressive_rejects_too_many_steps() -> None:
 
     with pytest.raises(ValueError, match="larger than action sequence length"):
         rollout(
-            blocks=blocks,
+            jepa=jepa,
             observations=torch.randn(2, 2, 4, 32, 32),
             actions=torch.randn(2, 2, 4),
         )
@@ -131,7 +181,7 @@ def test_latent_rollout_parallel_returns_expected_shape_and_steps() -> None:
     )
 
     output = rollout(
-        blocks=make_parallel_blocks(),
+        jepa=make_parallel_runtime(),
         observations=torch.zeros(2, 2, 4, 3, 3),
         actions=None,
     )
@@ -197,7 +247,7 @@ def test_build_latent_rollout_rejects_unknown_key() -> None:
         "unknown": "bad",
     }
 
-    with pytest.raises(KeyError, match="Unknown LatentRollout config keys"):
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
         build_latent_rollout(config=config)
 
 
@@ -205,5 +255,15 @@ def test_build_latent_rollout_rejects_unsupported_rollout_type() -> None:
     config = deepcopy(DEFAULT_LATENT_ROLLOUT_CONFIG)
     config["rollout_type"] = "unsupported"
 
-    with pytest.raises(KeyError, match="Only 'latent'"):
+    with pytest.raises(RuntimeError, match="Unknown rollout"):
         build_latent_rollout(config=config)
+
+
+def test_build_latent_rollout_returns_none_in_non_strict_mode_for_unknown_type() -> None:
+    config = deepcopy(DEFAULT_LATENT_ROLLOUT_CONFIG)
+    config["rollout_type"] = "unsupported"
+
+    with pytest.warns(UserWarning, match="Unknown rollout"):
+        rollout = build_latent_rollout(config=config, strict=False)
+
+    assert rollout is None

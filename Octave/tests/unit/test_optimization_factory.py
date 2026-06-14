@@ -4,7 +4,11 @@ import pytest
 import torch
 
 from Octave.src.Training.Optimization.configs import DEFAULT_ADAMW_CONFIG
-from Octave.src.Training.Optimization.factory import build_optimizer
+from Octave.src.Training.Optimization.factory import (
+    ConfiguredOptimizerBuilder,
+    build_optimizer,
+    build_optimizer_builder,
+)
 
 
 def test_build_optimizer_builds_adamw_from_plain_config() -> None:
@@ -17,6 +21,19 @@ def test_build_optimizer_builds_adamw_from_plain_config() -> None:
         optimizer_config=config,
     )
 
+    assert isinstance(optimizer, torch.optim.AdamW)
+    assert optimizer.param_groups[0]["lr"] == 0.01
+
+
+def test_build_optimizer_builder_returns_configured_callable() -> None:
+    parameter = torch.nn.Parameter(torch.tensor([1.0]))
+    config = deepcopy(DEFAULT_ADAMW_CONFIG)
+    config["lr"] = 0.01
+
+    optimizer_builder = build_optimizer_builder(optimizer_config=config)
+    optimizer = optimizer_builder(parameters=[parameter])
+
+    assert isinstance(optimizer_builder, ConfiguredOptimizerBuilder)
     assert isinstance(optimizer, torch.optim.AdamW)
     assert optimizer.param_groups[0]["lr"] == 0.01
 

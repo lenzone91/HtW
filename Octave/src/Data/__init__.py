@@ -1,1 +1,1 @@
-"""Data subsystem for the AcVideoJepa migration."""
+"""Data subsystem for AcVideoJepa."""

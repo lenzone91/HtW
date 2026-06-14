@@ -1,1 +1,1 @@
-"""Training support packages for the AcVideoJepa migration."""
+"""Training support packages for AcVideoJepa."""

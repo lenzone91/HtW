@@ -25,6 +25,7 @@ This folder owns Lightning DataModule orchestration for AcVideoJepa.
 
 - builds phase datasets through `Data/Datasets/factory.py`;
 - builds phase collators through `Data/Collators/factory.py`;
+- forwards factory strictness to child factories;
 - validates dataset and DataLoader runtime compatibility;
 - assembles `AcVideoJepaDataModule` from already-built objects.
 
@@ -78,13 +79,17 @@ The factory receives plain phase-keyed dictionaries:
 }
 ```
 
-`dataset_type` defaults to `two_rooms` when omitted because AcVideoJepa is the
-only supported migration target.
+`dataset_type` defaults to `two_rooms` when omitted because AcVideoJepa currently
+uses the Two Rooms dataset.
+
+The DataModule factory does not instantiate dataset or collator classes
+directly. It delegates to the owning child factories and only assembles the
+returned objects.
 
 ## Extension Steps
 
 1. Keep DataModule classes thin.
-2. Add child-object construction to `factory.py`.
+2. Delegate child-object construction to the child folder factory.
 3. Validate phase consistency early.
 4. Add a DataLoader smoke test.
 5. Update this README when orchestration changes.

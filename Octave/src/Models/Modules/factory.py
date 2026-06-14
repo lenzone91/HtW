@@ -1,8 +1,10 @@
 from copy import deepcopy
 
-from ..Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
+from ..Model.ac_video_jepa.factory import build_ac_video_jepa_components
 from ...Metrics.factory import build_ac_video_jepa_objective
 from ...Rollouts.factory import build_latent_rollout
+from ...Training.Optimization.factory import build_optimizer_builder
+from ...Training.Schedulers.factory import build_scheduler_builder
 from .ac_video_jepa_module import AcVideoJepaModule
 from .configs import DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG
 
@@ -31,8 +33,8 @@ class AcVideoJepaModuleBuilder:
     ) -> AcVideoJepaModule:
         prepared_config = self.prepare_config(config)
 
-        blocks = build_ac_video_jepa_blocks(
-            config=prepared_config["blocks_config"],
+        components = build_ac_video_jepa_components(
+            config=prepared_config["components_config"],
             runtime_context=runtime_context,
             strict=self.strict,
         )
@@ -43,17 +45,26 @@ class AcVideoJepaModuleBuilder:
         )
         objective = build_ac_video_jepa_objective(
             config=prepared_config["objective_config"],
-            encoder_shape=blocks.encoder_shape,
+            encoder_shape=components["encoder_shape"],
             runtime_context=runtime_context,
             strict=self.strict,
         )
+        optimizer_builder = build_optimizer_builder(
+            optimizer_config=prepared_config["optimizer_config"],
+        )
+        scheduler_builder = build_scheduler_builder(
+            scheduler_config=prepared_config["scheduler_config"],
+        )
 
         return AcVideoJepaModule(
-            blocks=blocks,
+            encoder=components["encoder"],
+            action_encoder=components["action_encoder"],
+            predictor=components["predictor"],
+            encoder_shape=components["encoder_shape"],
             rollout=rollout,
             objective=objective,
-            optimizer_config=prepared_config["optimizer_config"],
-            scheduler_config=prepared_config["scheduler_config"],
+            optimizer_builder=optimizer_builder,
+            scheduler_builder=scheduler_builder,
             strict=self.strict,
         )
 

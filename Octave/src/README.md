@@ -1,6 +1,7 @@
 # Octave Source README
 
-This folder is the main source tree for the AcVideoJepa migration.
+This folder is the main source tree for Octave's clean AcVideoJepa
+implementation.
 
 ## Folder Roles
 
@@ -13,13 +14,13 @@ This folder is the main source tree for the AcVideoJepa migration.
 
 `Models/`
 
-- AcVideoJepa architecture block construction;
+- AcVideoJepa architecture component construction;
 - Lightning JEPA composition and orchestration;
 - validation/evaluation weight loading.
 
 `Rollouts/`
 
-- latent rollout behavior over already-built model blocks;
+- latent rollout behavior over the JEPA Lightning runtime;
 - autoregressive and parallel prediction policies;
 - loss-free planning and inference trajectories.
 
@@ -74,13 +75,14 @@ network and loss primitives. Octave owns how those primitives are composed.
 Octave should import and wrap existing EB-JEPA implementations instead of
 recoding them:
 
-- encoders, action encoders, and predictors are architecture blocks;
+- encoders, action encoders, and predictors are architecture components;
 - rollout behavior belongs in `Rollouts/`;
 - prediction losses, regularizers, and metric aggregation belong in `Metrics/`;
 - `AcVideoJepaModule` is the Lightning-level JEPA runtime object.
 
-The monolithic EB-JEPA `JEPA` wrapper is useful as reference behavior, but it
-should not define Octave subsystem ownership.
+The monolithic EB-JEPA `JEPA` wrapper is not an Octave runtime dependency.
+Octave may match its conceptual behavior, but subsystem ownership is defined
+here.
 
 ## Extension Steps
 

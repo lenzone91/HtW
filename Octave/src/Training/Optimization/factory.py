@@ -12,6 +12,21 @@ OPTIMIZER_REGISTRY = {
 }
 
 
+class ConfiguredOptimizerBuilder:
+    """
+    Callable optimizer construction policy built from a plain config.
+    """
+
+    def __init__(self, optimizer_config: dict) -> None:
+        prepared_config = prepare_optimizer_config(optimizer_config)
+        optimizer_type = prepared_config.pop("optimizer_type")
+        self.optimizer_class, _ = OPTIMIZER_REGISTRY[optimizer_type]
+        self.optimizer_kwargs = prepared_config
+
+    def __call__(self, parameters) -> torch.optim.Optimizer:
+        return self.optimizer_class(parameters, **deepcopy(self.optimizer_kwargs))
+
+
 def build_optimizer(
     parameters,
     optimizer_config: dict,
@@ -19,11 +34,12 @@ def build_optimizer(
     """
     Build one optimizer from a plain dictionary config.
     """
-    prepared_config = prepare_optimizer_config(optimizer_config)
-    optimizer_type = prepared_config.pop("optimizer_type")
-    optimizer_class, _ = OPTIMIZER_REGISTRY[optimizer_type]
+    optimizer_builder = build_optimizer_builder(optimizer_config=optimizer_config)
+    return optimizer_builder(parameters)
 
-    return optimizer_class(parameters, **prepared_config)
+
+def build_optimizer_builder(optimizer_config: dict) -> ConfiguredOptimizerBuilder:
+    return ConfiguredOptimizerBuilder(optimizer_config=optimizer_config)
 
 
 def prepare_optimizer_config(optimizer_config: dict) -> dict:

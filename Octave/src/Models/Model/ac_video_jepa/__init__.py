@@ -1,12 +1,7 @@
-"""AcVideoJepa architecture block construction."""
+"""AcVideoJepa architecture component construction."""
 
-from .blocks import AcVideoJepaBlocks
-from .ac_video_jepa_model import AcVideoJepa
-from .factory import build_ac_video_jepa, build_ac_video_jepa_blocks
+from .factory import build_ac_video_jepa_components
 
 __all__ = [
-    "AcVideoJepaBlocks",
-    "AcVideoJepa",
-    "build_ac_video_jepa",
-    "build_ac_video_jepa_blocks",
+    "build_ac_video_jepa_components",
 ]

@@ -119,6 +119,17 @@ def test_build_collator_rejects_unknown_collator_type() -> None:
         build_collator(config=config)
 
 
+def test_build_collator_strict_false_ignores_unknown_config_key() -> None:
+    config = {
+        **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
+        "unknown": "ignored",
+    }
+
+    collator = build_collator(config=config, strict=False)
+
+    assert isinstance(collator, AcVideoJepaCollator)
+
+
 def test_build_collator_rejects_non_callable_transform() -> None:
     config = {
         **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,

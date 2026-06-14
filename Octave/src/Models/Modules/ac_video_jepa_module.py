@@ -1,10 +1,10 @@
-import torch
+from collections.abc import Callable
 
-from ..Model.ac_video_jepa.blocks import AcVideoJepaBlocks
+import torch
+from torch import nn
+
 from ...Metrics.ac_video_jepa_objective import AcVideoJepaObjective
 from ...Rollouts.latent_rollout import LatentRollout, LatentRolloutOutput
-from ...Training.Optimization.factory import build_optimizer
-from ...Training.Schedulers.factory import build_scheduler
 from .base import BaseLightningModule
 
 
@@ -17,20 +17,26 @@ class AcVideoJepaModule(BaseLightningModule):
 
     def __init__(
         self,
-        blocks: AcVideoJepaBlocks,
+        encoder: nn.Module,
+        action_encoder: nn.Module,
+        predictor: nn.Module,
+        encoder_shape: dict,
         rollout: LatentRollout,
         objective: AcVideoJepaObjective,
-        optimizer_config: dict,
-        scheduler_config: dict | None = None,
+        optimizer_builder: Callable,
+        scheduler_builder: Callable,
         strict: bool = True,
     ) -> None:
         super().__init__(strict=strict)
 
-        self.blocks = blocks
+        self.encoder = encoder
+        self.action_encoder = action_encoder
+        self.predictor = predictor
+        self.encoder_shape = dict(encoder_shape)
         self.rollout = rollout
         self.objective = objective
-        self.optimizer_config = dict(optimizer_config)
-        self.scheduler_config = dict(scheduler_config or {"enabled": False})
+        self.optimizer_builder = optimizer_builder
+        self.scheduler_builder = scheduler_builder
 
     def forward(
         self,
@@ -43,7 +49,20 @@ class AcVideoJepaModule(BaseLightningModule):
         )
 
     def encode(self, observations: torch.Tensor) -> torch.Tensor:
-        return self.blocks.encode(observations)
+        return self.encoder(observations)
+
+    def encode_actions(self, actions: torch.Tensor | None) -> torch.Tensor | None:
+        if actions is None:
+            return None
+
+        return self.action_encoder(actions)
+
+    def predict(
+        self,
+        states: torch.Tensor,
+        actions: torch.Tensor | None,
+    ) -> torch.Tensor:
+        return self.predictor(states, actions)
 
     def rollout_latents(
         self,
@@ -51,7 +70,7 @@ class AcVideoJepaModule(BaseLightningModule):
         actions: torch.Tensor,
     ) -> LatentRolloutOutput:
         return self.rollout(
-            blocks=self.blocks,
+            jepa=self,
             observations=observations,
             actions=actions,
         )
@@ -107,14 +126,8 @@ class AcVideoJepaModule(BaseLightningModule):
         return total_loss, log_dict
 
     def configure_optimizers(self):
-        optimizer = build_optimizer(
-            parameters=self.parameters(),
-            optimizer_config=self.optimizer_config,
-        )
-        scheduler = build_scheduler(
-            optimizer=optimizer,
-            scheduler_config=self.scheduler_config,
-        )
+        optimizer = self.optimizer_builder(self.parameters())
+        scheduler = self.scheduler_builder(optimizer)
 
         if scheduler is None:
             return optimizer

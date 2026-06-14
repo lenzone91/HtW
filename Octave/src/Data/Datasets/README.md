@@ -79,6 +79,7 @@ The factory:
 - validates unknown keys early;
 - merges user values with defaults;
 - converts the merged dict into `WallDatasetConfig`;
+- instantiates builders per call instead of storing mutable builder instances;
 - returns a `WallDatasetWrapper`.
 
 `runtime_context` is accepted for interface compatibility but is not currently

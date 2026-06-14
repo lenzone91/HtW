@@ -48,7 +48,7 @@ datamodule:
 
 module:
   module_type: ac_video_jepa
-  blocks_config:
+  components_config:
     model_type: ac_video_jepa
     encoder:
       encoder_type: impala

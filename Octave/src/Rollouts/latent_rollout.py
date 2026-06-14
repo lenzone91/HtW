@@ -2,6 +2,9 @@ from dataclasses import dataclass
 
 import torch
 
+from .configs import DEFAULT_LATENT_ROLLOUT_CONFIG
+from .registry import ROLLOUT_REGISTRY
+
 
 @dataclass(frozen=True)
 class LatentRolloutOutput:
@@ -18,9 +21,14 @@ class LatentRolloutOutput:
     predicted_steps: list[torch.Tensor] | None = None
 
 
+@ROLLOUT_REGISTRY.register_class(
+    name="latent",
+    default_config=DEFAULT_LATENT_ROLLOUT_CONFIG,
+    type_field="rollout_type",
+)
 class LatentRollout:
     """
-    Loss-free latent rollout over already-built AcVideoJepa architecture blocks.
+    Loss-free latent rollout over a JEPA runtime object.
     """
 
     valid_unroll_modes = {"parallel", "autoregressive"}
@@ -40,26 +48,26 @@ class LatentRollout:
 
     def __call__(
         self,
-        blocks,
+        jepa,
         observations: torch.Tensor,
         actions: torch.Tensor | None,
     ) -> LatentRolloutOutput:
-        encoded_states = blocks.encode(observations)
-        actions_encoded = blocks.encode_actions(actions)
+        encoded_states = jepa.encode(observations)
+        actions_encoded = jepa.encode_actions(actions)
         predicted_steps = [] if self.return_all_steps else None
 
         if self.unroll_mode == "parallel":
-            effective_ctxt_window = getattr(blocks.predictor, "context_length", 0)
+            effective_ctxt_window = getattr(jepa.predictor, "context_length", 0)
             predicted_states = self.rollout_parallel(
-                blocks=blocks,
+                jepa=jepa,
                 encoded_states=encoded_states,
                 actions_encoded=actions_encoded,
                 predicted_steps=predicted_steps,
             )
         elif self.unroll_mode == "autoregressive":
-            effective_ctxt_window = self.get_effective_ctxt_window(blocks)
+            effective_ctxt_window = self.get_effective_ctxt_window(jepa)
             predicted_states = self.rollout_autoregressive(
-                blocks=blocks,
+                jepa=jepa,
                 encoded_states=encoded_states,
                 actions=actions,
                 actions_encoded=actions_encoded,
@@ -80,16 +88,16 @@ class LatentRollout:
 
     def rollout_parallel(
         self,
-        blocks,
+        jepa,
         encoded_states: torch.Tensor,
         actions_encoded: torch.Tensor | None,
         predicted_steps: list[torch.Tensor] | None,
     ) -> torch.Tensor:
-        context_length = getattr(blocks.predictor, "context_length", 0)
+        context_length = getattr(jepa.predictor, "context_length", 0)
         predicted_states = encoded_states
 
         for _ in range(self.nsteps):
-            predicted_states = blocks.predict(predicted_states, actions_encoded)[
+            predicted_states = jepa.predict(predicted_states, actions_encoded)[
                 :, :, :-1
             ]
             if predicted_steps is not None:
@@ -104,7 +112,7 @@ class LatentRollout:
 
     def rollout_autoregressive(
         self,
-        blocks,
+        jepa,
         encoded_states: torch.Tensor,
         actions: torch.Tensor | None,
         actions_encoded: torch.Tensor | None,
@@ -116,7 +124,7 @@ class LatentRollout:
                 f"({actions.size(2)})"
             )
 
-        effective_ctxt_window = self.get_effective_ctxt_window(blocks)
+        effective_ctxt_window = self.get_effective_ctxt_window(jepa)
         predicted_states = encoded_states[:, :, :effective_ctxt_window]
 
         for step_index in range(self.nsteps):
@@ -130,7 +138,7 @@ class LatentRollout:
             else:
                 context_actions = None
 
-            pred_step = blocks.predict(context_states, context_actions)[:, :, -1:]
+            pred_step = jepa.predict(context_states, context_actions)[:, :, -1:]
             predicted_states = torch.cat([predicted_states, pred_step], dim=2)
 
             if predicted_steps is not None:
@@ -156,6 +164,6 @@ class LatentRollout:
                 "LatentRollout ctxt_window_time must be a positive integer."
             )
 
-    def get_effective_ctxt_window(self, blocks) -> int:
-        single_unroll = getattr(blocks.predictor, "is_rnn", False)
+    def get_effective_ctxt_window(self, jepa) -> int:
+        single_unroll = getattr(jepa.predictor, "is_rnn", False)
         return 1 if single_unroll else self.ctxt_window_time

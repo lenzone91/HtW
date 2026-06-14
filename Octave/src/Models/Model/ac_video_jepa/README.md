@@ -1,19 +1,8 @@
 # AcVideoJepa Model README
 
-This folder owns AcVideoJepa architecture block construction.
+This folder owns AcVideoJepa architecture component construction.
 
 ## File Roles
-
-`ac_video_jepa_model.py`
-
-- is being migrated away from the monolithic EB-JEPA `JEPA` wrapper;
-- should not own training objectives, metrics, or rollout policy.
-
-`blocks.py`
-
-- defines the registered architecture block container;
-- exposes encoder, action encoder, predictor, and probed encoder shape;
-- stays free of rollout and objective behavior.
 
 `configs.py`
 
@@ -21,11 +10,9 @@ This folder owns AcVideoJepa architecture block construction.
 
 `factory.py`
 
-- builds architecture blocks from plain dictionaries;
-- wires encoder, action encoder, and predictor blocks;
+- builds architecture components from plain dictionaries;
+- wires encoder, action encoder, and predictor components into callers;
 - owns architecture-dependent shape probing needed by downstream factories.
-- temporarily keeps the legacy monolithic builder until rollout and objective
-  orchestration have migrated.
 
 ## Model Contract
 
@@ -37,7 +24,7 @@ ImpalaEncoder
 -> RNNPredictor
 ```
 
-Only AcVideoJepa architecture blocks are in scope. Objective components such as
+Only AcVideoJepa architecture components are in scope. Objective components such as
 projectors, inverse dynamics models, regularizers, and prediction costs belong
 to `Octave/src/Metrics`.
 
@@ -54,6 +41,7 @@ It may:
 
 It must not:
 
+- expose a JEPA runtime object;
 - parse batches;
 - compute rollout trajectories;
 - build prediction costs or regularizers;

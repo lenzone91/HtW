@@ -1,18 +1,19 @@
 # Models README
 
-This folder owns model-side runtime objects for the AcVideoJepa migration.
+This folder owns model-side runtime objects for Octave's AcVideoJepa
+implementation.
 
 ## Folder Roles
 
 `Model/`
 
-- builds AcVideoJepa architecture blocks from plain configs;
+- builds AcVideoJepa architecture components from plain configs;
 - wraps EB-JEPA encoder, action encoder, and predictor components.
 
 `Modules/`
 
 - owns LightningModule JEPA orchestration;
-- receives already-built blocks, rollouts, objectives, optimizers, and
+- receives already-built components, rollouts, objectives, optimizers, and
   schedulers.
 
 `Loading/`
@@ -23,7 +24,7 @@ This folder owns model-side runtime objects for the AcVideoJepa migration.
 
 Models code may:
 
-- construct AcVideoJepa architecture blocks;
+- construct AcVideoJepa architecture components;
 - define Lightning training, validation, and test steps;
 - load checkpoint weights into objects that were already built by factories.
 
@@ -38,7 +39,7 @@ Models code must not:
 
 ## Extension Steps
 
-1. Put architecture block construction in `Model/`.
+1. Put architecture component construction in `Model/`.
 2. Put loss-free rollout behavior in `Rollouts/`.
 3. Put objective and metric composition in `Metrics/`.
 4. Put Lightning orchestration in `Modules/`.
