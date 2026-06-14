@@ -3,11 +3,19 @@ from collections.abc import Callable
 import torch
 from torch import nn
 
-from ...Metrics.ac_video_jepa_objective import AcVideoJepaObjective
+from ...Metrics.Loss.loss import WeightedMetricLoss
+from ...Metrics.MetricSets.metric_set import AcVideoJepaMetricSet
 from ...Rollouts.latent_rollout import LatentRollout, LatentRolloutOutput
 from .base import BaseLightningModule
+from .configs import DEFAULT_AC_VIDEO_JEPA_MODULE_CONSTRUCTOR_CONFIG
+from .registry import MODULE_REGISTRY
 
 
+@MODULE_REGISTRY.register_class(
+    name="ac_video_jepa",
+    default_config=DEFAULT_AC_VIDEO_JEPA_MODULE_CONSTRUCTOR_CONFIG,
+    type_field="module_type",
+)
 class AcVideoJepaModule(BaseLightningModule):
     """
     Lightning orchestration for AcVideoJepa.
@@ -22,7 +30,8 @@ class AcVideoJepaModule(BaseLightningModule):
         predictor: nn.Module,
         encoder_shape: dict,
         rollout: LatentRollout,
-        objective: AcVideoJepaObjective,
+        metric_set: AcVideoJepaMetricSet,
+        loss: WeightedMetricLoss,
         optimizer_builder: Callable,
         scheduler_builder: Callable,
         strict: bool = True,
@@ -33,8 +42,11 @@ class AcVideoJepaModule(BaseLightningModule):
         self.action_encoder = action_encoder
         self.predictor = predictor
         self.encoder_shape = dict(encoder_shape)
+
         self.rollout = rollout
-        self.objective = objective
+        self.metric_set = metric_set
+        self.loss = loss
+
         self.optimizer_builder = optimizer_builder
         self.scheduler_builder = scheduler_builder
 
@@ -77,6 +89,7 @@ class AcVideoJepaModule(BaseLightningModule):
 
     def training_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
+
         self.log_step_dict(
             "train",
             log_dict,
@@ -85,10 +98,12 @@ class AcVideoJepaModule(BaseLightningModule):
             on_epoch=True,
             logger=True,
         )
+
         return loss
 
     def validation_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
+
         self.log_step_dict(
             "val",
             log_dict,
@@ -97,10 +112,12 @@ class AcVideoJepaModule(BaseLightningModule):
             on_epoch=True,
             logger=True,
         )
+
         return loss
 
     def test_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
         loss, log_dict = self.compute_step_loss(batch=batch)
+
         self.log_step_dict(
             "test",
             log_dict,
@@ -109,6 +126,7 @@ class AcVideoJepaModule(BaseLightningModule):
             on_epoch=True,
             logger=True,
         )
+
         return loss
 
     def compute_step_loss(self, batch: dict) -> tuple[torch.Tensor, dict[str, object]]:
@@ -118,10 +136,18 @@ class AcVideoJepaModule(BaseLightningModule):
             observations=batch["states"],
             actions=batch["actions"],
         )
-        total_loss, log_dict = self.objective(
+
+        metric_values = self.metric_set(
             rollout_output=rollout_output,
             actions=batch["actions"],
         )
+
+        total_loss, loss_log_dict = self.loss(metric_values)
+
+        log_dict = {
+            **metric_values,
+            **loss_log_dict,
+        }
 
         return total_loss, log_dict
 
@@ -145,8 +171,7 @@ class AcVideoJepaModule(BaseLightningModule):
             )
 
         missing_keys = [
-            key
-            for key in self.required_batch_keys
+            key for key in self.required_batch_keys
             if key not in batch
         ]
 

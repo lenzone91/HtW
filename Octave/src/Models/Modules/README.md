@@ -2,79 +2,101 @@
 
 This folder owns LightningModule orchestration for AcVideoJepa.
 
+A module receives already-built runtime objects and defines Lightning step behavior:
+
+```text
+batch -> rollout -> metric_set -> loss -> logs
+```
+
+It does not build datasets, collators, model components, metrics, losses, optimizers, or schedulers directly.
+
 ## File Roles
 
-`base.py`
+```text
+Modules/
+- base.py
+- ac_video_jepa_module.py
+- registry.py
+- factory.py
+- configs.py
+- README.md
+```
 
-- defines logging helpers shared by Lightning modules;
-- forwards explicit Lightning logging options to `self.log_dict`;
-- validates ML-step names and log dictionaries.
+`base.py` defines shared Lightning logging helpers.
 
-`ac_video_jepa_module.py`
+`ac_video_jepa_module.py` defines `AcVideoJepaModule`.
 
-- defines AcVideoJepa Lightning orchestration;
-- receives already-built architecture components, rollout behavior, and objective
-  objects;
-- receives already-built optimizer and scheduler builder objects;
-- parses collated batch dictionaries;
-- calls rollout behavior without embedding rollout algorithms;
-- calls objective behavior without embedding loss internals;
-- logs train losses on step and epoch;
-- logs validation and test losses on epoch;
-- emits scalar logs to configured Lightning loggers.
+It registers the module with `MODULE_REGISTRY` through the decorator-based factory API and owns Lightning step orchestration.
 
-`configs.py`
+`registry.py` defines:
 
-- stores plain default Lightning module configs;
-- exposes separate architecture-component, rollout, objective, optimizer, and
-  scheduler config sections.
+```text
+MODULE_REGISTRY
+MODULE_BUILDER
+```
 
-`factory.py`
+`factory.py` exposes:
 
-- builds architecture components through `Model/ac_video_jepa/factory.py`;
-- builds rollout behavior through `Rollouts/factory.py`;
-- builds objective behavior through `Metrics/factory.py`;
-- builds optimizer and scheduler builders through `Training/`;
-- passes already-built objects into `AcVideoJepaModule`.
+```text
+build_ac_video_jepa_module
+```
 
-## Config Contract
+It builds required dependencies through their owning factories, then delegates final module construction to `src/Workflow/Factory`.
 
-AcVideoJepa module configs use separate sections:
+`configs.py` stores plain module configs.
+
+## Factory Contract
+
+The public module config is a plain dictionary:
 
 ```python
 {
+    "module_type": "ac_video_jepa",
     "components_config": {...},
     "rollout_config": {...},
-    "objective_config": {...},
+    "metric_set_config": {...},
+    "loss_config": {...},
     "optimizer_config": {...},
     "scheduler_config": {...},
+    "strict": True,
 }
 ```
 
-Architecture, rollout, and objective settings should not be mixed.
+The factory builds:
 
-## Subsystem Contract
+```text
+components_config  -> encoder/action_encoder/predictor/encoder_shape
+rollout_config     -> rollout
+metric_set_config  -> metric_set
+loss_config        -> loss
+optimizer_config   -> optimizer_builder
+scheduler_config   -> scheduler_builder
+```
 
-Lightning modules may:
+Then it constructs `AcVideoJepaModule`.
 
-- parse collated batch dictionaries;
-- register architecture components directly on the Lightning module;
-- call already-built objectives;
-- call already-built optimizer and scheduler builders inside
-  `configure_optimizers`;
-- log flat loss dictionaries;
+## JEPA Split Contract
 
-Lightning modules must not:
+The migrated module does not receive an objective object.
 
-- build model architectures directly;
-- implement rollout algorithms directly;
-- instantiate prediction losses or regularizers directly;
-- build optimizers or schedulers directly from plain configs;
-- build datasets or collators;
-- resolve paths;
-- depend on hidden global config.
+The old path:
 
-## Batch Contract
+```text
+rollout_output -> AcVideoJepaObjective -> loss, logs
+```
+
+is obsolete.
+
+The migrated path is:
+
+```text
+rollout_output -> metric_set -> metric_values
+metric_values  -> loss       -> total_loss, loss_logs
+```
+
+This keeps metric computation and scalar loss aggregation separated.
+
+## Step Contract
 
 The module expects collated batches with:
 
@@ -86,11 +108,18 @@ The module expects collated batches with:
 }
 ```
 
-`states` and `actions` are passed to the configured rollout and objective.
+Step logic:
+
+1. validate the batch;
+2. compute latent rollout from `states` and `actions`;
+3. compute flat metric values with `metric_set`;
+4. compute scalar loss with `loss`;
+5. merge metric logs and loss logs;
+6. log through Lightning.
 
 ## Logging Contract
 
-Training metrics are logged with:
+Training logs use:
 
 ```python
 on_step=True
@@ -98,7 +127,7 @@ on_epoch=True
 logger=True
 ```
 
-Validation and test metrics are logged with:
+Validation and test logs use:
 
 ```python
 on_step=False
@@ -106,14 +135,51 @@ on_epoch=True
 logger=True
 ```
 
-This keeps progress-bar feedback and dashboard scalar curves aligned.
+This preserves terminal feedback and dashboard scalar curves.
+
+## Subsystem Contract
+
+Lightning modules may:
+
+* parse collated batch dictionaries;
+* call already-built architecture components;
+* call already-built rollout behavior;
+* call already-built metric sets;
+* call already-built loss modules;
+* call already-built optimizer and scheduler builders;
+* define Lightning step behavior;
+* log flat dictionaries.
+
+Lightning modules must not:
+
+* build datasets or collators;
+* instantiate encoders, predictors, metrics, losses, optimizers, or schedulers directly;
+* implement rollout algorithms;
+* resolve paths;
+* read run configs directly;
+* depend on the obsolete `AcVideoJepaObjective`.
+
+## Registration Contract
+
+Modules are registered with the decorator-based registry API.
+
+The expected pattern is:
+
+1. define the LightningModule class;
+2. add constructor-level default config in `configs.py`;
+3. register the class with `MODULE_REGISTRY.register_class(...)`;
+4. expose public module construction through `factory.py`.
+
+Do not add manual module builder registries in `factory.py`.
 
 ## Extension Steps
 
-1. Keep architecture construction in the model factory.
-2. Keep batch construction in collators.
-3. Keep rollout behavior in `Rollouts/`.
-4. Keep objective behavior in `Metrics/`.
-5. Add module orchestration in `ac_video_jepa_module.py`.
-6. Add focused module tests.
-7. Update this README when training-step behavior changes.
+To add a module:
+
+1. define the LightningModule class;
+2. define its public config and constructor config;
+3. register the module class with `MODULE_REGISTRY`;
+4. build dependencies through their owning factories;
+5. delegate final construction to `src/Workflow/Factory`;
+6. add focused tests for dependency construction, batch validation, step output, and optimizer configuration;
+7. update this README if step behavior changes.
