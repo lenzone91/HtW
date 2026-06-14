@@ -3,7 +3,14 @@ import numbers
 import torch
 from torch import nn
 
+from .configs import DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG
+from .registry import LOSS_REGISTRY
 
+@LOSS_REGISTRY.register_class(
+    name="weighted_metric",
+    default_config=DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG,
+    type_field="loss_type",
+)
 class WeightedMetricLoss(nn.Module):
     """
     Weighted sum over a flat metric dictionary.
