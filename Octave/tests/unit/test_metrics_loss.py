@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from Octave.src.Metrics.loss import WeightedMetricLoss
+from Octave.src.Metrics.Loss.loss import WeightedMetricLoss
 
 
 def test_weighted_metric_loss_filters_inactive_weights() -> None:

@@ -4,10 +4,10 @@ import pytest
 import torch
 
 from Octave.src.Metrics.ac_video_jepa_objective import AcVideoJepaObjective
-from Octave.src.Metrics.prediction_metrics import (
+from Octave.src.Metrics.Metrics.prediction_metrics import (
     AutoregressivePredictionLossMetric,
 )
-from Octave.src.Metrics.regularizer_metrics import (
+from Octave.src.Metrics.Metrics.regularizer_metrics import (
     CovarianceLossMetric,
     HingeStdLossMetric,
     InverseDynamicsLossMetric,
@@ -15,8 +15,8 @@ from Octave.src.Metrics.regularizer_metrics import (
 )
 from Octave.src.Metrics.configs import DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG
 from Octave.src.Metrics.factory import build_ac_video_jepa_objective
-from Octave.src.Metrics.loss import WeightedMetricLoss
-from Octave.src.Metrics.metric_set import AcVideoJepaMetricSet
+from Octave.src.Metrics.Loss.loss import WeightedMetricLoss
+from Octave.src.Metrics.MetricSets.metric_set import AcVideoJepaMetricSet
 from Octave.src.Models.Model.ac_video_jepa.configs import (
     DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG,
 )

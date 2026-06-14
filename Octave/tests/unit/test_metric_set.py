@@ -2,7 +2,7 @@ import pytest
 import torch
 from torch import nn
 
-from Octave.src.Metrics.metric_set import LoggableMetricSet, MetricSet
+from Octave.src.Metrics.MetricSets.metric_set import LoggableMetricSet, MetricSet
 
 
 class IdentityMetric(nn.Module):

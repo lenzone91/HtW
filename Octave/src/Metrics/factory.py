@@ -3,11 +3,11 @@ from copy import deepcopy
 from eb_jepa.architectures import InverseDynamicsModel, Projector
 from eb_jepa.losses import SquareLossSeq
 
-from .prediction_metrics import (
+from .Metrics.prediction_metrics import (
     AutoregressivePredictionLossMetric,
     ParallelPredictionLossMetric,
 )
-from .regularizer_metrics import (
+from .Metrics.regularizer_metrics import (
     CovarianceLossMetric,
     HingeStdLossMetric,
     InverseDynamicsLossMetric,
@@ -15,8 +15,8 @@ from .regularizer_metrics import (
 )
 from .ac_video_jepa_objective import AcVideoJepaObjective
 from .configs import DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG
-from .loss import WeightedMetricLoss
-from .metric_set import AcVideoJepaMetricSet
+from .Loss.loss import WeightedMetricLoss
+from .MetricSets.metric_set import AcVideoJepaMetricSet
 
 
 DEFAULT_PREDICTION_LOSS_METRIC_CONFIG = (
