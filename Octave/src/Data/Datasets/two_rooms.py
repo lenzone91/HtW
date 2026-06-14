@@ -2,6 +2,15 @@ from typing import Any
 
 from eb_jepa.datasets.two_rooms.wall_dataset import WallDataset, WallDatasetConfig
 
+from .configs import DEFAULT_TWO_ROOMS_DATASET_CONFIG
+from .registry import (
+    DATASET_REGISTRY,
+    WALL_DATASET_CONFIG_FIELDS,
+    make_two_rooms_default_config,
+    resolve_wall_dataset_config,
+)
+from ...Workflow.Factory.registry import FieldResolution
+
 
 AC_VIDEO_JEPA_SAMPLE_KEYS = (
     "states",
@@ -12,7 +21,18 @@ AC_VIDEO_JEPA_SAMPLE_KEYS = (
     "metadata",
 )
 
-
+@DATASET_REGISTRY.register_class(
+    name="two_rooms",
+    default_config=make_two_rooms_default_config(),
+    type_field="dataset_type",
+    field_resolutions=(
+        FieldResolution(
+            target_key="config",
+            resolver=resolve_wall_dataset_config,
+            remove_source_keys=WALL_DATASET_CONFIG_FIELDS,
+        ),
+    ),
+)
 class WallDatasetWrapper(WallDataset):
     """
     Octave adapter around EB-JEPA's Two Rooms WallDataset.
