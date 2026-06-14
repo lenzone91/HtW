@@ -3,6 +3,10 @@ import torch
 from .base import BaseBatchTransform, BaseCollator
 from ..Datasets.two_rooms import AC_VIDEO_JEPA_SAMPLE_KEYS
 
+from .configs import DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG
+from .registry import COLLATOR_REGISTRY, resolve_collator_transforms
+from ...Workflow.Factory.registry import FieldResolution
+
 
 AC_VIDEO_JEPA_TENSOR_KEYS = (
     "states",
@@ -13,6 +17,18 @@ AC_VIDEO_JEPA_TENSOR_KEYS = (
 )
 
 
+
+@COLLATOR_REGISTRY.register_class(
+    name="ac_video_jepa",
+    default_config=DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
+    type_field="collator_type",
+    field_resolutions=(
+        FieldResolution(
+            target_key="transforms",
+            resolver=resolve_collator_transforms,
+        ),
+    ),
+)
 class AcVideoJepaCollator(BaseCollator):
     """
     Collate AcVideoJepa semantic samples into semantic batch dictionaries.
