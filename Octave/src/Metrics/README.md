@@ -1,84 +1,125 @@
 # Metrics README
 
-This folder owns objective, loss, regularizer, and metric composition for
-Octave runtime objects.
+This folder owns metric modules, metric-set composition, and scalar loss aggregation for Octave.
 
-## Folder Role
+The root `Metrics/` package is now a facade over three migrated subpackages:
 
-`Metrics/` wraps reusable EB-JEPA metric implementations and adapts them to
-Octave orchestration.
+```text
+Metrics/
+- Metrics/
+- MetricSets/
+- Loss/
+```
 
-For AcVideoJepa, this includes prediction cost, anti-collapse regularization,
-optional inverse dynamics loss, and the flat log dictionary consumed by
-Lightning modules.
+The obsolete `ac_video_jepa_objective.py` path is not part of the migrated JEPA split logic.
 
-## File Roles
+## Folder Roles
 
-`ac_video_jepa_objective.py`
+`Metrics/Metrics/`
 
-- defines `AcVideoJepaObjective`;
-- evaluates an already-built metric set;
-- passes flat metric values to an already-built weighted loss;
-- returns metric logs plus loss logs for Lightning modules.
+* owns elementary metric modules;
+* owns prediction-cost helper modules;
+* builds registered metric objects from plain configs.
 
-`prediction_metrics.py`
+`Metrics/MetricSets/`
 
-- defines one metric module per prediction-rollout comparison;
-- separates autoregressive and parallel prediction losses.
+* owns metric composition;
+* routes structured runtime inputs to elementary metrics;
+* returns flat metric dictionaries.
 
-`regularizer_metrics.py`
+`Metrics/Loss/`
 
-- defines one metric module per EB-JEPA elementary regularizer;
-- wraps EB-JEPA standard-deviation, covariance, temporal-similarity, and inverse
-  dynamics loss implementations;
-- keeps each metric independently registered as an `nn.Module`.
+* owns scalar loss aggregation;
+* consumes flat metric dictionaries;
+* returns the final scalar loss and optional loss logs.
 
-`metric_set.py`
+Root `Metrics/factory.py`
 
-- defines generic metric-set utilities;
-- defines `AcVideoJepaMetricSet`, which routes rollout outputs to metrics;
-- converts metric outputs into a flat log dictionary.
+* exposes convenience wrappers around the migrated subfactories;
+* builds the AcVideoJepa metric stack as `{metric_set, loss}`;
+* does not build an `AcVideoJepaObjective`.
 
-`loss.py`
+## Factory Contract
 
-- defines `WeightedMetricLoss`;
-- consumes a flat metric dictionary;
-- computes a weighted scalar training loss.
+The root factory exposes:
 
-`configs.py`
+```text
+build_metrics
+build_metric_from_config
+build_metric_set
+build_ac_video_jepa_metric_set
+build_loss
+build_ac_video_jepa_metric_stack
+```
 
-- stores plain objective defaults.
+`build_ac_video_jepa_metric_stack(...)` returns:
 
-`factory.py`
+```python
+{
+    "metric_set": metric_set,
+    "loss": loss,
+}
+```
 
-- builds EB-JEPA projectors, inverse dynamics models, prediction costs, and
-  regularizers from plain configs;
-- builds metric modules, metric sets, and weighted loss objects;
-- injects those already-built objects into `AcVideoJepaObjective`.
+This is the object pair that the future `AcVideoJepaModule` refactor should receive directly.
 
-## Ownership Rules
+## JEPA Split Contract
+
+The migrated JEPA split separates responsibilities:
+
+```text
+rollout -> metric_set -> flat metric values -> loss
+```
+
+Therefore:
+
+* rollout logic belongs to `Rollouts/`;
+* elementary metric logic belongs to `Metrics/Metrics/`;
+* metric routing belongs to `Metrics/MetricSets/`;
+* scalar loss aggregation belongs to `Metrics/Loss/`;
+* Lightning step orchestration belongs to `Models/Modules/`.
+
+There should be no monolithic objective wrapper in the migrated path.
+
+## Obsolete Objective Path
+
+`ac_video_jepa_objective.py` is obsolete with respect to the JEPA split logic.
+
+It should not be used for new code.
+
+The root factory should not expose:
+
+```text
+build_ac_video_jepa_objective
+```
+
+The later `Models/Modules` migration should replace objective usage with already-built `metric_set` and `loss` objects.
+
+## Subsystem Contract
 
 Metrics code may:
 
-- instantiate EB-JEPA loss and regularizer classes from plain configs;
-- build objective-only helper modules such as projectors and inverse dynamics
-  models;
-- consume structured rollout outputs;
-- aggregate flat metric values with a weighted loss;
-- produce flat log dictionaries.
+* build elementary metrics;
+* build metric sets;
+* build scalar loss aggregators;
+* wrap reusable EB-JEPA metric and regularizer primitives;
+* produce flat metric dictionaries.
 
 Metrics code must not:
 
-- build encoders, action encoders, or predictors;
-- implement rollout algorithms;
-- parse dataloader batches beyond objective inputs it is explicitly given;
-- configure optimizers or schedulers;
-- resolve paths or read run YAML files.
+* build encoders, action encoders, or predictors;
+* implement rollout algorithms;
+* own Lightning training steps;
+* configure optimizers or schedulers;
+* resolve paths or read run YAML files.
 
 ## Extension Steps
 
-1. Add plain objective defaults in `configs.py`.
-2. Add objective construction in `factory.py`.
-3. Wrap existing EB-JEPA metric implementations instead of recoding them.
-4. Add focused unit tests for objective values, log keys, and semantic failures.
-5. Update this README when objective behavior changes.
+To add metric functionality:
+
+1. add elementary metrics under `Metrics/Metrics/`;
+2. add metric-set composition under `Metrics/MetricSets/`;
+3. add scalar aggregation logic under `Metrics/Loss/`;
+4. expose only stable convenience wrappers from root `Metrics/factory.py`;
+5. update the relevant local README and this facade README if the public contract changes.
+

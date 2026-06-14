@@ -1,6 +1,14 @@
-"""Objective and metric composition for Octave runtime objects."""
+"""Metric, metric-set, and loss construction for Octave."""
 
-from .ac_video_jepa_objective import AcVideoJepaObjective
+from .factory import (
+    build_ac_video_jepa_metric_stack,
+    build_loss,
+    build_metric_from_config,
+    build_metric_set,
+    build_metrics,
+)
+from .Loss.loss import WeightedMetricLoss
+from .MetricSets.metric_set import AcVideoJepaMetricSet, LoggableMetricSet, MetricSet
 from .Metrics.prediction_metrics import (
     AutoregressivePredictionLossMetric,
     ParallelPredictionLossMetric,
@@ -11,21 +19,21 @@ from .Metrics.regularizer_metrics import (
     InverseDynamicsLossMetric,
     TemporalSimilarityLossMetric,
 )
-from .factory import build_ac_video_jepa_objective
-from .Loss.loss import WeightedMetricLoss
-from .MetricSets.metric_set import AcVideoJepaMetricSet, LoggableMetricSet, MetricSet
 
 __all__ = [
-    "AcVideoJepaObjective",
+    "AcVideoJepaMetricSet",
     "AutoregressivePredictionLossMetric",
-    "ParallelPredictionLossMetric",
     "CovarianceLossMetric",
     "HingeStdLossMetric",
     "InverseDynamicsLossMetric",
-    "TemporalSimilarityLossMetric",
-    "AcVideoJepaMetricSet",
     "LoggableMetricSet",
     "MetricSet",
+    "ParallelPredictionLossMetric",
+    "TemporalSimilarityLossMetric",
     "WeightedMetricLoss",
-    "build_ac_video_jepa_objective",
+    "build_ac_video_jepa_metric_stack",
+    "build_loss",
+    "build_metric_from_config",
+    "build_metric_set",
+    "build_metrics",
 ]
