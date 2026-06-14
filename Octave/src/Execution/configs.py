@@ -1,21 +1,14 @@
-DEFAULT_RUNTIME_CONTEXT = {
-    "paths": {
-        "run_dir": "Octave/runs/ac_video_jepa",
-    },
-}
-
-
-DEFAULT_TRAINER_CONFIG = {
-    "accelerator": "cpu",
-    "devices": 1,
-    "fast_dev_run": True,
-    "enable_checkpointing": False,
-    "enable_model_summary": False,
+DEFAULT_LIGHTNING_TRAINER_CONFIG = {
+    "trainer_type": "lightning",
+    "max_epochs": 1,
+    "accelerator": "auto",
+    "devices": "auto",
+    "enable_checkpointing": True,
+    "enable_progress_bar": True,
+    "log_every_n_steps": 1,
 }
 
 
 DEFAULT_EXECUTION_CONFIG = {
-    "runtime_context": DEFAULT_RUNTIME_CONTEXT,
-    "trainer": DEFAULT_TRAINER_CONFIG,
-    "loggers": {},
+    "trainer": dict(DEFAULT_LIGHTNING_TRAINER_CONFIG),
 }

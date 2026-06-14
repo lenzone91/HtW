@@ -1,5 +1,8 @@
 from copy import deepcopy
 
+from .registry import TRAINER_REGISTRY
+from ..Workflow.Factory.builder import RegistryBuilder
+
 from lightning.pytorch import Trainer
 
 from ..Data.DataModules.factory import build_ac_video_jepa_datamodule
@@ -66,29 +69,44 @@ def build_trainer(
     logger_configs: dict,
     checkpoint_configs: dict,
     runtime_context: dict,
-) -> Trainer:
-    trainer_kwargs = deepcopy(trainer_config)
+):
+    trainer_config = deepcopy(trainer_config)
 
-    if "logger" in trainer_kwargs:
+    if "logger" in trainer_config:
         raise KeyError(
             "Trainer config must not define 'logger'. "
             "Use the execution-level 'loggers' config instead."
+        )
+
+    if "callbacks" in trainer_config:
+        raise KeyError(
+            "Trainer config must not define 'callbacks'. "
+            "Use the execution-level 'checkpoints' and logger callback configs instead."
         )
 
     loggers = build_loggers(
         logger_configs=logger_configs,
         runtime_context=runtime_context,
     )
+
     callbacks = build_checkpoint_callbacks(
         checkpoint_configs=checkpoint_configs,
         runtime_context=runtime_context,
     )
     callbacks.extend(build_logger_callbacks(logger_configs=logger_configs))
 
-    return Trainer(
-        logger=loggers,
-        callbacks=callbacks,
-        **trainer_kwargs,
+    trainer_config["logger"] = loggers
+    trainer_config["callbacks"] = callbacks
+
+    builder = RegistryBuilder(
+        registry=TRAINER_REGISTRY,
+        strict=True,
+        type_field="trainer_type",
+    )
+
+    return builder.build_one(
+        config=trainer_config,
+        runtime_context=runtime_context,
     )
 
 
