@@ -76,12 +76,21 @@ def test_run_configs_use_safe_cuda_dataloader_settings() -> None:
 
 def test_ac_video_jepa_train_config_matches_ac_model_contract() -> None:
     config = load_run_config("ac_video_jepa_train.yaml")
-    model_config = config["module"]["model_config"]
+    blocks_config = config["module"]["blocks_config"]
+    rollout_config = config["module"]["rollout_config"]
+    objective_config = config["module"]["objective_config"]
 
-    assert model_config["model_type"] == "ac_video_jepa"
-    assert model_config["encoder"]["encoder_type"] == "impala"
-    assert model_config["predictor"]["predictor_type"] == "rnn"
-    assert config["module"]["unroll_config"]["nsteps"] == 8
+    assert blocks_config["model_type"] == "ac_video_jepa"
+    assert blocks_config["encoder"]["encoder_type"] == "impala"
+    assert blocks_config["predictor"]["predictor_type"] == "rnn"
+    assert rollout_config["rollout_type"] == "latent"
+    assert rollout_config["nsteps"] == 8
+    assert objective_config["objective_type"] == "ac_video_jepa"
+    assert objective_config["metric_set"]["metrics"]["prediction_loss"][
+        "metric_type"
+    ] == "autoregressive_prediction_loss"
+    assert objective_config["loss"]["metric_weights"]["cov_loss"] == 8.0
+    assert objective_config["loss"]["metric_weights"]["std_loss"] == 16.0
 
 
 def test_ac_video_jepa_validate_config_loads_module_without_resume() -> None:

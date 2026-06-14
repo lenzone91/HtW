@@ -6,13 +6,14 @@ This folder owns model-side runtime objects for the AcVideoJepa migration.
 
 `Model/`
 
-- builds the AcVideoJepa world model from plain configs;
-- wraps EB-JEPA architecture components.
+- builds AcVideoJepa architecture blocks from plain configs;
+- wraps EB-JEPA encoder, action encoder, and predictor components.
 
 `Modules/`
 
-- owns LightningModule orchestration;
-- receives already-built model objects.
+- owns LightningModule JEPA orchestration;
+- receives already-built blocks, rollouts, objectives, optimizers, and
+  schedulers.
 
 `Loading/`
 
@@ -22,7 +23,7 @@ This folder owns model-side runtime objects for the AcVideoJepa migration.
 
 Models code may:
 
-- construct AcVideoJepa architecture objects;
+- construct AcVideoJepa architecture blocks;
 - define Lightning training, validation, and test steps;
 - load checkpoint weights into objects that were already built by factories.
 
@@ -30,21 +31,29 @@ Models code must not:
 
 - resolve dataset paths;
 - build dataloaders;
+- own rollout algorithms;
+- own prediction losses or regularizers;
 - configure Trainer callbacks;
 - perform training resume.
 
 ## Extension Steps
 
-1. Put architecture construction in `Model/`.
-2. Put Lightning orchestration in `Modules/`.
-3. Put validation/evaluation weight loading in `Loading/`.
-4. Add focused tests under `Octave/tests`.
-5. Update the local README for the touched subsystem.
+1. Put architecture block construction in `Model/`.
+2. Put loss-free rollout behavior in `Rollouts/`.
+3. Put objective and metric composition in `Metrics/`.
+4. Put Lightning orchestration in `Modules/`.
+5. Put validation/evaluation weight loading in `Loading/`.
+6. Add focused tests under `Octave/tests`.
+7. Update the local README for the touched subsystem.
 
 ## Ownership Rules
 
 Model factories own architecture construction.
 
-Lightning modules own step orchestration.
+Rollout factories own rollout behavior.
+
+Metrics factories own objective and loss composition.
+
+Lightning modules own JEPA step orchestration.
 
 Execution owns when training or validation runs happen.

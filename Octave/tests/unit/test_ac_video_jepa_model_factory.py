@@ -2,10 +2,18 @@ from copy import deepcopy
 
 import pytest
 import torch
+from torch import nn
 
+from Octave.src.Models.Model.ac_video_jepa.blocks import AcVideoJepaBlocks
 from Octave.src.Models.Model.ac_video_jepa.ac_video_jepa_model import AcVideoJepa
-from Octave.src.Models.Model.ac_video_jepa.configs import DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG
-from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa
+from Octave.src.Models.Model.ac_video_jepa.configs import (
+    DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG,
+    DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG,
+)
+from Octave.src.Models.Model.ac_video_jepa.factory import (
+    build_ac_video_jepa,
+    build_ac_video_jepa_blocks,
+)
 
 
 def make_tiny_model_config() -> dict:
@@ -40,6 +48,83 @@ def make_tiny_model_config() -> dict:
         }
     )
     return config
+
+
+def make_tiny_blocks_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG)
+    config["encoder"].update(
+        {
+            "stack_sizes": [4, 8, 8],
+            "input_channels": 2,
+            "input_shape": [2, 32, 32],
+            "mlp_output_dim": 32,
+        }
+    )
+    config["predictor"].update(
+        {
+            "hidden_size": 32,
+            "action_dim": 2,
+        }
+    )
+    return config
+
+
+def test_build_ac_video_jepa_blocks_builds_architecture_blocks() -> None:
+    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+
+    assert isinstance(blocks, AcVideoJepaBlocks)
+    assert blocks.encoder.mlp_output_dim == 32
+    assert isinstance(blocks.action_encoder, nn.Identity)
+    assert blocks.predictor.rnn.input_size == 2
+    assert blocks.predictor.rnn.hidden_size == 32
+    assert blocks.encoder_shape == {
+        "feature_dim": 32,
+        "height": 1,
+        "width": 1,
+    }
+
+
+def test_build_ac_video_jepa_blocks_does_not_mutate_input_config() -> None:
+    config = make_tiny_blocks_config()
+    original_config = deepcopy(config)
+
+    build_ac_video_jepa_blocks(config=config)
+
+    assert config == original_config
+
+
+def test_build_ac_video_jepa_blocks_rejects_unknown_top_level_key() -> None:
+    config = {
+        **make_tiny_blocks_config(),
+        "regularizer": {},
+    }
+
+    with pytest.raises(KeyError, match="Unknown AcVideoJepa blocks config keys"):
+        build_ac_video_jepa_blocks(config=config)
+
+
+def test_build_ac_video_jepa_blocks_rejects_unknown_nested_key() -> None:
+    config = make_tiny_blocks_config()
+    config["predictor"]["unknown"] = "bad"
+
+    with pytest.raises(KeyError, match="Unknown AcVideoJepa predictor config keys"):
+        build_ac_video_jepa_blocks(config=config)
+
+
+def test_build_ac_video_jepa_blocks_rejects_unsupported_encoder_type() -> None:
+    config = make_tiny_blocks_config()
+    config["encoder"]["encoder_type"] = "unsupported"
+
+    with pytest.raises(KeyError, match="Only 'impala'"):
+        build_ac_video_jepa_blocks(config=config)
+
+
+def test_build_ac_video_jepa_blocks_rejects_unsupported_predictor_type() -> None:
+    config = make_tiny_blocks_config()
+    config["predictor"]["predictor_type"] = "unsupported"
+
+    with pytest.raises(KeyError, match="Only 'rnn'"):
+        build_ac_video_jepa_blocks(config=config)
 
 
 def test_build_ac_video_jepa_builds_model_from_plain_config() -> None:

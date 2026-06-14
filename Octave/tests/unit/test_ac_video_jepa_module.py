@@ -3,16 +3,20 @@ from copy import deepcopy
 import pytest
 import torch
 
-from Octave.src.Models.Model.ac_video_jepa.configs import DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG
-from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa
+from Octave.src.Metrics.configs import DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG
+from Octave.src.Metrics.factory import build_ac_video_jepa_objective
+from Octave.src.Models.Model.ac_video_jepa.configs import DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG
+from Octave.src.Models.Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
 from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.src.Models.Modules.configs import DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG
 from Octave.src.Models.Modules.factory import build_ac_video_jepa_module
+from Octave.src.Rollouts.configs import DEFAULT_LATENT_ROLLOUT_CONFIG
+from Octave.src.Rollouts.factory import build_latent_rollout
 from Octave.src.Training.Optimization.configs import DEFAULT_ADAMW_CONFIG
 
 
-def make_tiny_model_config() -> dict:
-    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG)
+def make_tiny_blocks_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG)
     config["encoder"].update(
         {
             "stack_sizes": [4, 8, 8],
@@ -26,30 +30,40 @@ def make_tiny_model_config() -> dict:
             "action_dim": 2,
         }
     )
-    config["inverse_dynamics_model"].update(
+    return config
+
+
+def make_tiny_objective_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG)
+    config["metric_set"]["metrics"]["idm_loss"]["inverse_dynamics_model"].update(
         {
             "hidden_dim": 16,
             "action_dim": 2,
         }
     )
-    config["regularizer"].update(
+    config["loss"]["metric_weights"].update(
         {
-            "cov_coeff": 0.1,
-            "std_coeff": 0.1,
-            "sim_coeff_t": 0.1,
-            "idm_coeff": 0.1,
+            "cov_loss": 0.1,
+            "std_loss": 0.1,
+            "sim_loss_t": 0.1,
+            "idm_loss": 0.1,
         }
     )
     return config
 
 
-def make_unroll_config() -> dict:
-    return {
-        "nsteps": 2,
-        "unroll_mode": "autoregressive",
-        "ctxt_window_time": 1,
-        "return_all_steps": False,
-    }
+def make_rollout_config() -> dict:
+    config = deepcopy(DEFAULT_LATENT_ROLLOUT_CONFIG)
+    config.update(
+        {
+            "rollout_type": "latent",
+            "nsteps": 2,
+            "unroll_mode": "autoregressive",
+            "ctxt_window_time": 1,
+            "return_all_steps": False,
+        }
+    )
+    return config
 
 
 def make_batch() -> dict:
@@ -64,13 +78,19 @@ def make_batch() -> dict:
 
 
 def make_module() -> AcVideoJepaModule:
-    model = build_ac_video_jepa(config=make_tiny_model_config())
+    blocks = build_ac_video_jepa_blocks(config=make_tiny_blocks_config())
+    rollout = build_latent_rollout(config=make_rollout_config())
+    objective = build_ac_video_jepa_objective(
+        config=make_tiny_objective_config(),
+        encoder_shape=blocks.encoder_shape,
+    )
     optimizer_config = deepcopy(DEFAULT_ADAMW_CONFIG)
     optimizer_config["lr"] = 1e-3
 
     return AcVideoJepaModule(
-        model=model,
-        unroll_config=make_unroll_config(),
+        blocks=blocks,
+        rollout=rollout,
+        objective=objective,
         optimizer_config=optimizer_config,
         scheduler_config={"enabled": False},
     )
@@ -78,8 +98,9 @@ def make_module() -> AcVideoJepaModule:
 
 def make_tiny_module_config() -> dict:
     config = deepcopy(DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG)
-    config["model_config"] = make_tiny_model_config()
-    config["unroll_config"] = make_unroll_config()
+    config["blocks_config"] = make_tiny_blocks_config()
+    config["rollout_config"] = make_rollout_config()
+    config["objective_config"] = make_tiny_objective_config()
     config["optimizer_config"]["lr"] = 1e-3
     return config
 
@@ -91,8 +112,20 @@ def test_ac_video_jepa_module_compute_step_loss_returns_scalar_and_logs() -> Non
 
     assert loss.shape == torch.Size([])
     assert log_dict["loss"] is loss
-    assert "regularizer/cov_loss" in log_dict
-    assert "regularizer/idm_loss" in log_dict
+    assert "prediction_loss" in log_dict
+    assert "cov_loss" in log_dict
+    assert "idm_loss" in log_dict
+    assert "loss/cov_loss" in log_dict
+
+
+def test_ac_video_jepa_module_forward_returns_loss_free_rollout() -> None:
+    module = make_module()
+    batch = make_batch()
+
+    rollout_output = module(batch["states"], batch["actions"])
+
+    assert rollout_output.predicted_states.shape == torch.Size([2, 32, 3, 1, 1])
+    assert not hasattr(rollout_output, "losses")
 
 
 def test_ac_video_jepa_module_training_step_returns_loss() -> None:
@@ -207,7 +240,8 @@ def test_build_ac_video_jepa_module_builds_module_from_plain_config() -> None:
     module = build_ac_video_jepa_module(config=make_tiny_module_config())
 
     assert isinstance(module, AcVideoJepaModule)
-    assert module.unroll_config["nsteps"] == 2
+    assert module.rollout.nsteps == 2
+    assert module.blocks.encoder_shape["feature_dim"] == 32
 
 
 def test_build_ac_video_jepa_module_does_not_mutate_input_config() -> None:

@@ -39,7 +39,7 @@ datamodule:
 
 module:
   module_type: ac_video_jepa
-  model_config:
+  blocks_config:
     model_type: ac_video_jepa
     encoder:
       encoder_type: impala
@@ -60,33 +60,70 @@ module:
       action_dim: 2
       num_layers: 1
       use_encoder_final_ln: true
-    projector:
-      enabled: false
-      mlp_spec: null
-      hidden_multiplier: 4
-    inverse_dynamics_model:
-      enabled: true
-      hidden_dim: 256
-      action_dim: 2
-    regularizer:
-      regularizer_type: vc_idm_sim
-      cov_coeff: 8.0
-      std_coeff: 16.0
-      sim_coeff_t: 12.0
-      idm_coeff: 1.0
-      std_margin: 1.0
-      first_t_only: false
-      spatial_as_samples: false
-      sim_t_after_proj: false
-      idm_after_proj: false
-    prediction_cost:
-      prediction_cost_type: square_loss_seq
-      use_projector: false
-  unroll_config:
+  rollout_config:
+    rollout_type: latent
     nsteps: 8
     unroll_mode: autoregressive
     ctxt_window_time: 1
     return_all_steps: false
+  objective_config:
+    objective_type: ac_video_jepa
+    metric_set:
+      set_type: ac_video_jepa
+      strict: true
+      metric_to_input_names: null
+      metrics:
+        prediction_loss:
+          metric_type: autoregressive_prediction_loss
+          prediction_cost:
+            prediction_cost_type: square_loss_seq
+            use_projector: false
+        std_loss:
+          metric_type: hinge_std
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          std_margin: 1.0
+          first_t_only: false
+          spatial_as_samples: false
+        cov_loss:
+          metric_type: covariance
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          first_t_only: false
+          spatial_as_samples: false
+        sim_loss_t:
+          metric_type: temporal_similarity
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          after_projection: false
+        idm_loss:
+          metric_type: inverse_dynamics
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          inverse_dynamics_model:
+            enabled: true
+            hidden_dim: 256
+            action_dim: 2
+          after_projection: false
+    loss:
+      loss_type: weighted_metric
+      name: loss
+      strict: true
+      return_loss_terms: true
+      metric_weights:
+        prediction_loss: 1.0
+        cov_loss: 8.0
+        std_loss: 16.0
+        sim_loss_t: 12.0
+        idm_loss: 1.0
   optimizer_config:
     optimizer_type: adamw
     lr: 0.001

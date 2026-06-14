@@ -1,6 +1,8 @@
 from copy import deepcopy
 
-from ..Model.ac_video_jepa.factory import build_ac_video_jepa
+from ..Model.ac_video_jepa.factory import build_ac_video_jepa_blocks
+from ...Metrics.factory import build_ac_video_jepa_objective
+from ...Rollouts.factory import build_latent_rollout
 from .ac_video_jepa_module import AcVideoJepaModule
 from .configs import DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG
 
@@ -29,15 +31,27 @@ class AcVideoJepaModuleBuilder:
     ) -> AcVideoJepaModule:
         prepared_config = self.prepare_config(config)
 
-        model = build_ac_video_jepa(
-            config=prepared_config["model_config"],
+        blocks = build_ac_video_jepa_blocks(
+            config=prepared_config["blocks_config"],
+            runtime_context=runtime_context,
+            strict=self.strict,
+        )
+        rollout = build_latent_rollout(
+            config=prepared_config["rollout_config"],
+            runtime_context=runtime_context,
+            strict=self.strict,
+        )
+        objective = build_ac_video_jepa_objective(
+            config=prepared_config["objective_config"],
+            encoder_shape=blocks.encoder_shape,
             runtime_context=runtime_context,
             strict=self.strict,
         )
 
         return AcVideoJepaModule(
-            model=model,
-            unroll_config=prepared_config["unroll_config"],
+            blocks=blocks,
+            rollout=rollout,
+            objective=objective,
             optimizer_config=prepared_config["optimizer_config"],
             scheduler_config=prepared_config["scheduler_config"],
             strict=self.strict,

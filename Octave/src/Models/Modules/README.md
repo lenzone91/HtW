@@ -12,36 +12,60 @@ This folder owns LightningModule orchestration for AcVideoJepa.
 
 `ac_video_jepa_module.py`
 
-- defines AcVideoJepa training orchestration;
-- receives an already-built AcVideoJepa model;
+- defines AcVideoJepa Lightning orchestration;
+- receives already-built architecture blocks, rollout behavior, and objective
+  objects;
 - parses collated batch dictionaries;
-- calls `model.unroll`.
+- calls rollout behavior without embedding rollout algorithms;
+- calls objective behavior without embedding loss internals;
 - logs train losses on step and epoch;
 - logs validation and test losses on epoch;
 - emits scalar logs to configured Lightning loggers.
 
 `configs.py`
 
-- stores plain default Lightning module configs.
+- stores plain default Lightning module configs;
+- exposes separate architecture-block, rollout, objective, optimizer, and
+  scheduler config sections.
 
 `factory.py`
 
-- builds the model through `Model/ac_video_jepa/factory.py`;
+- builds architecture blocks through `Model/ac_video_jepa/factory.py`;
+- builds rollout behavior through `Rollouts/factory.py`;
+- builds objective behavior through `Metrics/factory.py`;
 - passes already-built objects into `AcVideoJepaModule`.
+
+## Config Contract
+
+AcVideoJepa module configs use separate sections:
+
+```python
+{
+    "blocks_config": {...},
+    "rollout_config": {...},
+    "objective_config": {...},
+    "optimizer_config": {...},
+    "scheduler_config": {...},
+}
+```
+
+Architecture, rollout, and objective settings should not be mixed.
 
 ## Subsystem Contract
 
 Lightning modules may:
 
 - parse collated batch dictionaries;
-- call already-built models;
-- compute configured unroll objectives;
+- call already-built architecture blocks through rollout objects;
+- call already-built objectives;
 - log flat loss dictionaries;
 - configure optimizers from plain configs.
 
 Lightning modules must not:
 
 - build model architectures directly;
+- implement rollout algorithms directly;
+- instantiate prediction losses or regularizers directly;
 - build datasets or collators;
 - resolve paths;
 - depend on hidden global config.
@@ -58,7 +82,7 @@ The module expects collated batches with:
 }
 ```
 
-`states` and `actions` are passed to AcVideoJepa `unroll`.
+`states` and `actions` are passed to the configured rollout and objective.
 
 ## Logging Contract
 
@@ -82,8 +106,10 @@ This keeps progress-bar feedback and dashboard scalar curves aligned.
 
 ## Extension Steps
 
-1. Keep model construction in the model factory.
+1. Keep architecture construction in the model factory.
 2. Keep batch construction in collators.
-3. Add module orchestration in `ac_video_jepa_module.py`.
-4. Add focused module tests.
-5. Update this README when training-step behavior changes.
+3. Keep rollout behavior in `Rollouts/`.
+4. Keep objective behavior in `Metrics/`.
+5. Add module orchestration in `ac_video_jepa_module.py`.
+6. Add focused module tests.
+7. Update this README when training-step behavior changes.

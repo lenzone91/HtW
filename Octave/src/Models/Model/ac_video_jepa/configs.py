@@ -1,4 +1,7 @@
-DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG = {
+from copy import deepcopy
+
+
+DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG = {
     "model_type": "ac_video_jepa",
     "encoder": {
         "encoder_type": "impala",
@@ -22,6 +25,11 @@ DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG = {
         "num_layers": 1,
         "use_encoder_final_ln": True,
     },
+}
+
+
+DEFAULT_AC_VIDEO_JEPA_MODEL_CONFIG = {
+    **deepcopy(DEFAULT_AC_VIDEO_JEPA_BLOCKS_CONFIG),
     "projector": {
         "enabled": False,
         "mlp_spec": None,

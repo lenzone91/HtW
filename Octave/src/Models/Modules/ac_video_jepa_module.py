@@ -1,6 +1,8 @@
 import torch
 
-from ..Model.ac_video_jepa.ac_video_jepa_model import AcVideoJepa
+from ..Model.ac_video_jepa.blocks import AcVideoJepaBlocks
+from ...Metrics.ac_video_jepa_objective import AcVideoJepaObjective
+from ...Rollouts.latent_rollout import LatentRollout, LatentRolloutOutput
 from ...Training.Optimization.factory import build_optimizer
 from ...Training.Schedulers.factory import build_scheduler
 from .base import BaseLightningModule
@@ -15,25 +17,43 @@ class AcVideoJepaModule(BaseLightningModule):
 
     def __init__(
         self,
-        model: AcVideoJepa,
-        unroll_config: dict,
+        blocks: AcVideoJepaBlocks,
+        rollout: LatentRollout,
+        objective: AcVideoJepaObjective,
         optimizer_config: dict,
         scheduler_config: dict | None = None,
         strict: bool = True,
     ) -> None:
         super().__init__(strict=strict)
 
-        self.model = model
-        self.unroll_config = dict(unroll_config)
+        self.blocks = blocks
+        self.rollout = rollout
+        self.objective = objective
         self.optimizer_config = dict(optimizer_config)
         self.scheduler_config = dict(scheduler_config or {"enabled": False})
 
-    def forward(self, observations: torch.Tensor, actions: torch.Tensor):
-        return self.model.unroll(
-            observations,
-            actions,
-            compute_loss=False,
-            **self.unroll_config,
+    def forward(
+        self,
+        observations: torch.Tensor,
+        actions: torch.Tensor,
+    ) -> LatentRolloutOutput:
+        return self.rollout_latents(
+            observations=observations,
+            actions=actions,
+        )
+
+    def encode(self, observations: torch.Tensor) -> torch.Tensor:
+        return self.blocks.encode(observations)
+
+    def rollout_latents(
+        self,
+        observations: torch.Tensor,
+        actions: torch.Tensor,
+    ) -> LatentRolloutOutput:
+        return self.rollout(
+            blocks=self.blocks,
+            observations=observations,
+            actions=actions,
         )
 
     def training_step(self, batch: dict, batch_idx: int) -> torch.Tensor:
@@ -75,31 +95,20 @@ class AcVideoJepaModule(BaseLightningModule):
     def compute_step_loss(self, batch: dict) -> tuple[torch.Tensor, dict[str, object]]:
         self.check_batch(batch)
 
-        _, losses = self.model.unroll(
-            batch["states"],
-            batch["actions"],
-            compute_loss=True,
-            **self.unroll_config,
+        rollout_output = self.rollout_latents(
+            observations=batch["states"],
+            actions=batch["actions"],
         )
-
-        total_loss, reg_loss, reg_loss_unweighted, reg_loss_dict, pred_loss = losses
-
-        log_dict = {
-            "loss": total_loss,
-            "reg_loss": reg_loss,
-            "reg_loss_unweighted": reg_loss_unweighted,
-            "pred_loss": pred_loss,
-            **{
-                f"regularizer/{key}": value
-                for key, value in reg_loss_dict.items()
-            },
-        }
+        total_loss, log_dict = self.objective(
+            rollout_output=rollout_output,
+            actions=batch["actions"],
+        )
 
         return total_loss, log_dict
 
     def configure_optimizers(self):
         optimizer = build_optimizer(
-            parameters=self.model.parameters(),
+            parameters=self.parameters(),
             optimizer_config=self.optimizer_config,
         )
         scheduler = build_scheduler(
