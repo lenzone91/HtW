@@ -1,17 +1,33 @@
 import torch
 from torch import nn
 
+from .configs import DEFAULT_AC_VIDEO_JEPA_METRIC_SET_CONFIG
+from .registry import METRIC_SET_REGISTRY, METRICS_SUB_BUILD
+
 
 class MetricSet(nn.Module):
     """
     Collection of independently registered metric modules.
     """
 
-    def __init__(self, strict: bool = True, **metrics: nn.Module) -> None:
+    def __init__(
+        self,
+        strict: bool = True,
+        metrics: dict[str, nn.Module] | None = None,
+        **extra_metrics: nn.Module,
+    ) -> None:
         super().__init__()
+
+        prepared_metrics = {}
+
+        if metrics is not None:
+            prepared_metrics.update(metrics)
+
+        prepared_metrics.update(extra_metrics)
+
         self.strict = strict
-        self.check_metrics(metrics)
-        self.metrics = nn.ModuleDict(metrics)
+        self.check_metrics(prepared_metrics)
+        self.metrics = nn.ModuleDict(prepared_metrics)
 
     def forward(self, metrics_inputs: dict) -> dict:
         metrics_values = {}
@@ -124,6 +140,12 @@ class LoggableMetricSet(MetricSet):
         log_dict[key] = value
 
 
+@METRIC_SET_REGISTRY.register_class(
+    name="ac_video_jepa",
+    default_config=DEFAULT_AC_VIDEO_JEPA_METRIC_SET_CONFIG,
+    type_field="set_type",
+    sub_builds=(METRICS_SUB_BUILD,),
+)
 class AcVideoJepaMetricSet(LoggableMetricSet):
     """
     MetricSet specialized for AcVideoJepa rollout outputs.
@@ -143,9 +165,15 @@ class AcVideoJepaMetricSet(LoggableMetricSet):
         self,
         strict: bool = True,
         metric_to_input_names: dict[str, tuple[str, ...]] | None = None,
-        **metrics: nn.Module,
+        metrics: dict[str, nn.Module] | None = None,
+        **extra_metrics: nn.Module,
     ) -> None:
-        super().__init__(strict=strict, **metrics)
+        super().__init__(
+            strict=strict,
+            metrics=metrics,
+            **extra_metrics,
+        )
+
         self.metric_to_input_names = dict(self.metric_to_input_names)
 
         if metric_to_input_names is not None:
