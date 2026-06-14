@@ -2,14 +2,32 @@ from typing import Any
 
 from eb_jepa.datasets.two_rooms.wall_dataset import WallDataset, WallDatasetConfig
 
+from dataclasses import fields
+
 from .configs import DEFAULT_TWO_ROOMS_DATASET_CONFIG
-from .registry import (
-    DATASET_REGISTRY,
-    WALL_DATASET_CONFIG_FIELDS,
-    make_two_rooms_default_config,
-    resolve_wall_dataset_config,
-)
+from .registry import DATASET_REGISTRY
 from ...Workflow.Factory.registry import FieldResolution
+
+WALL_DATASET_CONFIG_FIELDS = tuple(
+    field.name
+    for field in fields(WallDatasetConfig)
+)
+
+
+def resolve_wall_dataset_config(
+    config: dict,
+    runtime_context: dict | None = None,
+    strict: bool = True,
+    **kwargs,
+) -> WallDatasetConfig:
+    config_kwargs = {
+        key: value
+        for key, value in config.items()
+        if key in WALL_DATASET_CONFIG_FIELDS
+    }
+
+    return WallDatasetConfig(**config_kwargs)
+    
 
 
 AC_VIDEO_JEPA_SAMPLE_KEYS = (
@@ -23,8 +41,7 @@ AC_VIDEO_JEPA_SAMPLE_KEYS = (
 
 @DATASET_REGISTRY.register_class(
     name="two_rooms",
-    default_config=make_two_rooms_default_config(),
-    type_field="dataset_type",
+    default_config=DEFAULT_TWO_ROOMS_DATASET_CONFIG,
     field_resolutions=(
         FieldResolution(
             target_key="config",

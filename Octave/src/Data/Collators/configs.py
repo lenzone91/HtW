@@ -1,4 +1,7 @@
 DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG = {
-    "collator_type": "ac_video_jepa",
     "transforms": [],
+}
+
+DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIGS = {
+    "ac_video_jepa": dict(DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG),
 }

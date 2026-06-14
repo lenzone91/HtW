@@ -1,40 +1,20 @@
-from . import two_rooms as _two_rooms  # noqa: F401
+from . import two_rooms  # noqa: F401
 from .configs import DEFAULT_DATASETS_CONFIG, DEFAULT_TWO_ROOMS_DATASET_CONFIG
-from .registry import DATASET_REGISTRY
-from .two_rooms import WallDatasetWrapper
-from ...Workflow.Factory.builder import RegistryBuilder
+from .registry import DATASET_BUILDER
 
 
-def make_dataset_builder(strict: bool = True) -> RegistryBuilder:
-    return RegistryBuilder(
-        registry=DATASET_REGISTRY,
-        strict=strict,
-        type_field="dataset_type",
-    )
-
-
-def build_dataset(
-    config: dict,
+def build_dataset_from_config(
+    dataset_config: dict,
+    dataset_name: str,
     runtime_context: dict | None = None,
     strict: bool = True,
-) -> WallDatasetWrapper:
-    builder = make_dataset_builder(strict=strict)
-    return builder.build_one(
-        config=config,
-        runtime_context=runtime_context,
-    )
+):
+    DATASET_BUILDER.strict = strict
 
-
-def build_two_rooms_dataset(
-    config: dict | None = None,
-    runtime_context: dict | None = None,
-    strict: bool = True,
-) -> WallDatasetWrapper:
-    builder = make_dataset_builder(strict=strict)
-    return builder.build_one(
-        config=config or DEFAULT_TWO_ROOMS_DATASET_CONFIG,
+    return DATASET_BUILDER.build_one(
+        config=dataset_config,
         runtime_context=runtime_context,
-        name="two_rooms",
+        name=dataset_name,
     )
 
 
@@ -42,9 +22,46 @@ def build_datasets(
     dataset_configs: dict | None = None,
     runtime_context: dict | None = None,
     strict: bool = True,
-) -> dict[str, WallDatasetWrapper]:
-    builder = make_dataset_builder(strict=strict)
-    return builder.build_named(
+) -> dict:
+    DATASET_BUILDER.strict = strict
+
+    return DATASET_BUILDER.build_named(
         configs=dataset_configs or DEFAULT_DATASETS_CONFIG,
         runtime_context=runtime_context,
+    )
+
+
+def build_dataset(
+    dataset_config: dict,
+    runtime_context: dict | None = None,
+    strict: bool = True,
+):
+    datasets = build_datasets(
+        dataset_configs=dataset_config,
+        runtime_context=runtime_context,
+        strict=strict,
+    )
+
+    if datasets is None:
+        return None
+
+    if len(datasets) != 1:
+        raise ValueError(
+            "build_dataset expects exactly one dataset config, "
+            f"got {len(datasets)}."
+        )
+
+    return next(iter(datasets.values()))
+
+
+def build_two_rooms_dataset(
+    config: dict | None = None,
+    runtime_context: dict | None = None,
+    strict: bool = True,
+):
+    return build_dataset_from_config(
+        dataset_config=config or DEFAULT_TWO_ROOMS_DATASET_CONFIG,
+        dataset_name="two_rooms",
+        runtime_context=runtime_context,
+        strict=strict,
     )

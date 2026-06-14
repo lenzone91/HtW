@@ -1,41 +1,51 @@
-# Datasets
+# Datasets README
 
-This folder owns dataset-level data access for AcVideoJepa.
+This folder owns dataset-level sample access for AcVideoJepa.
 
-A dataset maps an integer sample index to a semantic sample dictionary consumed by collators and downstream training code.
+Datasets operate on integer indices:
 
-```python
-index -> sample_dict
+```text
+index -> sample: dict
 ```
+
+They expose semantic sample dictionaries consumed by collators and downstream training code.
 
 ## File Roles
 
-`two_rooms.py`
+```text
+Datasets/
+- two_rooms.py
+- registry.py
+- factory.py
+- configs.py
+- README.md
+```
 
-* wraps EB-JEPA `WallDataset`;
-* adapts EB-JEPA `WallSample` objects into Octave semantic dictionaries;
-* defines the AcVideoJepa sample key contract;
-* registers `WallDatasetWrapper` in `DATASET_REGISTRY` through the `src/Workflow/Factory` decorator API.
+`two_rooms.py` defines `WallDatasetWrapper`.
 
-`configs.py`
+It wraps EB-JEPA `WallDataset`, adapts EB-JEPA samples into Octave sample dictionaries, and registers the dataset with `DATASET_REGISTRY` through the decorator-based factory API.
 
-* stores plain, serializable dataset config dictionaries;
-* exposes `DEFAULT_TWO_ROOMS_DATASET_CONFIG`;
-* exposes `DEFAULT_DATASETS_CONFIG`;
-* does not instantiate dataset objects.
+`registry.py` defines:
 
-`registry.py`
+```text
+DATASET_REGISTRY
+DATASET_BUILDER
+```
 
-* defines `DATASET_REGISTRY`;
-* defines dataset-specific field resolutions;
-* owns conversion from plain Octave config dictionaries to EB-JEPA `WallDatasetConfig`;
-* exposes the shared registry builder used by this subsystem.
+It should stay declarative and should not contain dataset-specific conversion logic.
 
-`factory.py`
+`factory.py` exposes public construction helpers:
 
-* imports registered dataset implementations so decorator registration is executed;
-* exposes public build functions;
-* delegates object construction to the shared `src/Workflow/Factory` logic.
+```text
+build_dataset_from_config
+build_datasets
+build_dataset
+build_two_rooms_dataset
+```
+
+It imports dataset implementation files so decorator registration is executed, then delegates construction to the shared `src/Workflow/Factory` logic.
+
+`configs.py` stores reusable plain dataset configs.
 
 ## Sample Contract
 
@@ -54,111 +64,101 @@ AcVideoJepa datasets return:
 
 The tensor shapes are inherited from EB-JEPA after its per-sample squeeze:
 
-* `states`: `[C, T, H, W]`;
-* `actions`: `[2, T]`;
-* `locations`: `[2, T]`;
-* `wall_x`: scalar-like tensor;
-* `door_y`: scalar-like tensor.
+```text
+states:    [C, T, H, W]
+actions:   [2, T]
+locations: [2, T]
+wall_x:    scalar-like tensor
+door_y:    scalar-like tensor
+```
 
-`metadata` stores sample-level information and is intentionally kept as a dictionary at dataset level.
-
-## Subsystem Contract
-
-Datasets may:
-
-* access individual samples;
-* adapt external dataset objects into Octave semantic dictionaries;
-* validate raw sample structure;
-* preserve sample metadata.
-
-Datasets must not:
-
-* build DataLoaders;
-* perform batch collation;
-* resolve project paths;
-* read run configs directly;
-* construct models, losses, metrics, or Lightning modules;
-* perform runtime orchestration.
+`metadata` stores sample-level information.
 
 ## Factory Contract
 
-Datasets are built from plain dictionary configs.
-
-Single dataset config:
+Datasets are built from named configs.
 
 ```python
 {
-    "dataset_type": "two_rooms",
-    "device": "cpu",
-    "size": 10000,
-    ...
-}
-```
-
-Named dataset configs:
-
-```python
-{
-    "train": {
-        "dataset_type": "two_rooms",
+    "two_rooms": {
         "device": "cpu",
         "size": 10000,
         ...
-    },
-    "val": {
-        "dataset_type": "two_rooms",
-        "device": "cpu",
-        "size": 1000,
-        ...
-    },
+    }
 }
 ```
 
-`dataset_type` selects the registered dataset implementation.
+The outer config key selects the registered dataset name.
 
-The dataset factory must not implement manual registry lookup or generic config merging. Those responsibilities belong to `src/Workflow/Factory`.
+There is no `dataset_type` field in the default named-config path.
+
+The dataset factory must not implement manual dataset builder registries. Generic object construction belongs to `src/Workflow/Factory`.
 
 ## EB-JEPA Config Adaptation
 
-The Two Rooms dataset ultimately expects an EB-JEPA `WallDatasetConfig`.
+Octave configs remain plain serializable dictionaries.
 
-Octave configs remain plain dictionaries. The conversion:
+The Two Rooms dataset constructor expects an EB-JEPA `WallDatasetConfig`.
 
-```python
+Therefore the conversion:
+
+```text
 dict -> WallDatasetConfig
 ```
 
-belongs to `Data/Datasets/registry.py` as a dataset-specific field resolution.
+is declared as a factory field resolution in the dataset registration decorator, next to `WallDatasetWrapper`.
 
-This keeps:
-
-* run configs serializable;
-* dataset wrappers focused on sample access;
-* generic factory logic centralized in `src/Workflow/Factory`.
+The wrapper receives an already-prepared `WallDatasetConfig`.
 
 ## Registration Contract
 
-New datasets should be registered with the decorator-based registry API.
+Datasets are registered with the decorator-based registry API.
 
 The expected pattern is:
 
 1. define the dataset wrapper;
 2. add its plain default config in `configs.py`;
 3. register the class with `DATASET_REGISTRY.register_class(...)`;
-4. keep dataset-specific field adaptation in `registry.py`;
+4. declare constructor adaptations through field resolutions if needed;
 5. expose construction through `factory.py`.
 
-Do not add manual `DATASET_BUILDERS_REGISTRY` dictionaries in `factory.py`.
+Do not add manual `DATASET_BUILDERS_REGISTRY` dictionaries.
+
+Do not register classes manually inside `factory.py` with:
+
+```python
+DATASET_REGISTRY.register_class(...)(DatasetClass)
+```
+
+Registration should be attached to the class definition with a decorator.
+
+## Subsystem Contract
+
+Datasets may:
+
+* access individual samples;
+* adapt external dataset samples into Octave dictionaries;
+* preserve sample metadata;
+* validate raw sample structure;
+* declare constructor-level config adaptation.
+
+Datasets must not:
+
+* build DataLoaders;
+* perform batch collation;
+* resolve project paths;
+* construct models, losses, metrics, or Lightning modules;
+* perform runtime orchestration.
 
 ## Validation Responsibility
 
 Generic validation belongs to `src/Workflow/Factory`, including:
 
-* selecting the object from its type field;
-* checking config keys;
+* selecting objects from registered names;
+* checking config keys against default configs;
 * merging defaults;
 * applying field resolutions;
-* instantiating the object.
+* instantiating objects.
 
 Dataset-specific validation belongs here, including:
 
@@ -168,13 +168,12 @@ Dataset-specific validation belongs here, including:
 
 ## Extension Steps
 
-To add a new dataset:
+To add a dataset:
 
 1. create the dataset wrapper;
 2. define its plain default config in `configs.py`;
 3. register it with `DATASET_REGISTRY.register_class(...)`;
-4. add dataset-specific field resolutions in `registry.py`;
-5. import the dataset module in `factory.py` if needed to trigger registration;
+4. add field resolutions if constructor adaptation is required;
+5. import the implementation module in `factory.py` so registration is executed;
 6. add focused tests for registration, config validation, and sample contract;
 7. update this README if the subsystem contract changes.
-
