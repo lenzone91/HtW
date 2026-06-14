@@ -2,36 +2,48 @@
 
 This folder owns learning-rate scheduler construction for Octave.
 
+Schedulers are delayed-construction objects:
+
+```text
+scheduler_config -> scheduler_builder
+scheduler_builder + optimizer -> Lightning scheduler dictionary
+```
+
+The scheduler builder can be created before the optimizer exists. The actual PyTorch scheduler is created later, once an optimizer is available.
+
 ## File Roles
 
-`configs.py`
+```text
+Schedulers/
+- configs.py
+- registry.py
+- schedulers.py
+- factory.py
+- README.md
+```
 
-- stores plain scheduler config dictionaries.
+`configs.py` stores plain scheduler config dictionaries.
 
-`factory.py`
+`registry.py` defines:
 
-- builds PyTorch schedulers from plain dictionaries;
-- builds configured scheduler builder objects for Lightning modules;
-- returns Lightning-compatible scheduler dictionaries;
-- validates scheduler type and config keys.
+```text
+SCHEDULER_REGISTRY
+SCHEDULER_BUILDER
+```
 
-## Subsystem Contract
+`schedulers.py` defines registered scheduler-builder classes.
 
-Schedulers may:
+Each registered class maps one scheduler type to one PyTorch scheduler class.
 
-- map scheduler config names to PyTorch scheduler classes;
-- attach schedulers to an optimizer supplied by a caller;
-- expose configured callable builders for modules whose optimizer is only
-  available inside `configure_optimizers`;
-- provide Lightning metadata such as `interval`, `frequency`, and `monitor`;
-- reject unknown scheduler keys early.
+`factory.py` exposes:
 
-Schedulers must not:
+```text
+build_scheduler
+build_scheduler_builder
+is_scheduler_enabled
+```
 
-- build optimizers;
-- decide which model parameters are trained;
-- run training;
-- read run configs directly.
+It imports scheduler implementation files so decorator registration is executed, handles disabled scheduler configs, and delegates enabled scheduler construction to `src/Workflow/Factory`.
 
 ## Factory Contract
 
@@ -51,14 +63,99 @@ Enabled scheduler config:
     "scheduler_type": "step_lr",
     "step_size": 1,
     "gamma": 0.1,
+    "last_epoch": -1,
     "interval": "epoch",
     "frequency": 1,
+    "monitor": None,
+    "strict": True,
+    "name": None,
 }
 ```
 
-Supported scheduler types are `step_lr`, `cosine_annealing_lr`, and
-`reduce_lr_on_plateau`.
+`scheduler_type` selects the registered scheduler-builder class.
 
-`build_scheduler_builder` returns an already-configured callable object. A
-Lightning module may call that object with the optimizer returned by its
-optimizer builder, but it does not own config parsing.
+The scheduler factory must not implement manual scheduler registries or manual default merging. Generic registry lookup, config validation, default merging, and object construction belong to `src/Workflow/Factory`.
+
+## Delayed Construction Contract
+
+`build_scheduler_builder(...)` returns a callable object.
+
+For enabled scheduler configs, the returned object is a configured scheduler builder:
+
+```python
+scheduler_builder(optimizer)
+```
+
+It returns a Lightning-compatible scheduler dictionary:
+
+```python
+{
+    "scheduler": scheduler,
+    "interval": "epoch",
+    "frequency": 1,
+    ...
+}
+```
+
+For disabled scheduler configs, the returned object returns `None` when called.
+
+## Registration Contract
+
+Schedulers are registered with the decorator-based registry API.
+
+The expected pattern is:
+
+1. define a scheduler-builder class;
+2. set its `scheduler_class`;
+3. add its plain default config in `configs.py`;
+4. register the class with `SCHEDULER_REGISTRY.register_class(...)`;
+5. expose construction through `factory.py`.
+
+Do not add manual `SCHEDULER_REGISTRY = {...}` dictionaries in `factory.py`.
+
+## Subsystem Contract
+
+Schedulers may:
+
+* parse scheduler configs;
+* create delayed callable scheduler builders;
+* instantiate PyTorch schedulers once an optimizer is supplied;
+* return Lightning-compatible scheduler dictionaries;
+* expose Lightning metadata such as `interval`, `frequency`, `monitor`, `strict`, and `name`.
+
+Schedulers must not:
+
+* build optimizers;
+* decide which model parameters are trained;
+* build models or datamodules;
+* run training;
+* resolve experiment paths;
+* read run configs directly.
+
+## Validation Responsibility
+
+Generic validation belongs to `src/Workflow/Factory`, including:
+
+* selecting the registered scheduler-builder class from `scheduler_type`;
+* checking config keys against the registered default config;
+* merging defaults;
+* instantiating the configured scheduler-builder object.
+
+Scheduler-specific validation belongs here, including:
+
+* detecting whether a scheduler is enabled;
+* preserving delayed construction until an optimizer exists;
+* separating Lightning scheduler metadata from PyTorch scheduler kwargs.
+
+## Extension Steps
+
+To add a scheduler:
+
+1. add a plain default config in `configs.py`;
+2. create a scheduler-builder class in `schedulers.py`;
+3. set its `scheduler_class`;
+4. register it with `SCHEDULER_REGISTRY.register_class(...)`;
+5. import the implementation module in `factory.py` so registration is executed;
+6. add focused tests for registration, disabled behavior, config validation, and delayed construction;
+7. update this README if the subsystem contract changes.
+
