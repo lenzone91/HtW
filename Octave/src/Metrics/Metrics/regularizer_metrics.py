@@ -5,6 +5,97 @@ from eb_jepa.losses import CovarianceLoss, HingeStdLoss, InverseDynamicsLoss
 from eb_jepa.losses import TemporalSimilarityLoss
 from Octave.src.Rollouts.latent_rollout import LatentRolloutOutput
 
+from eb_jepa.architectures import InverseDynamicsModel, Projector
+
+from .configs import (
+    DEFAULT_COVARIANCE_LOSS_METRIC_CONFIG,
+    DEFAULT_HINGE_STD_LOSS_METRIC_CONFIG,
+    DEFAULT_INVERSE_DYNAMICS_LOSS_METRIC_CONFIG,
+    DEFAULT_TEMPORAL_SIMILARITY_LOSS_METRIC_CONFIG,
+)
+from .registry import METRIC_REGISTRY
+from ...Workflow.Factory.registry import FieldResolution
+
+
+def resolve_projector(
+    config: dict,
+    runtime_context: dict | None = None,
+    strict: bool = True,
+    encoder_shape: dict | None = None,
+    **kwargs,
+) -> Projector | None:
+    projector_config = config.get("projector")
+
+    if projector_config is None:
+        return None
+
+    if not projector_config["enabled"]:
+        return None
+
+    if encoder_shape is None:
+        raise ValueError("encoder_shape is required to build a metric projector.")
+
+    encoder_dim = encoder_shape["feature_dim"]
+    mlp_spec = projector_config["mlp_spec"]
+
+    if mlp_spec is None:
+        hidden_dim = encoder_dim * projector_config["hidden_multiplier"]
+        mlp_spec = f"{encoder_dim}-{hidden_dim}-{hidden_dim}"
+
+    return Projector(mlp_spec)
+
+
+def resolve_inverse_dynamics_model(
+    config: dict,
+    runtime_context: dict | None = None,
+    strict: bool = True,
+    encoder_shape: dict | None = None,
+    **kwargs,
+) -> InverseDynamicsModel | None:
+    idm_config = config.get("inverse_dynamics_model")
+
+    if idm_config is None:
+        return None
+
+    if not idm_config["enabled"]:
+        return None
+
+    if encoder_shape is None:
+        raise ValueError(
+            "encoder_shape is required to build an inverse dynamics model."
+        )
+
+    projector = config.get("projector")
+    after_projection = config["after_projection"]
+
+    if after_projection and projector is not None:
+        state_channels = projector.out_dim
+    else:
+        state_channels = encoder_shape["feature_dim"]
+
+    state_dim = (
+        encoder_shape["height"]
+        * encoder_shape["width"]
+        * state_channels
+    )
+
+    return InverseDynamicsModel(
+        state_dim=state_dim,
+        hidden_dim=idm_config["hidden_dim"],
+        action_dim=idm_config["action_dim"],
+    )
+
+
+PROJECTOR_FIELD = FieldResolution(
+    target_key="projector",
+    resolver=resolve_projector,
+)
+
+INVERSE_DYNAMICS_MODEL_FIELD = FieldResolution(
+    target_key="inverse_dynamics_model",
+    resolver=resolve_inverse_dynamics_model,
+)
+
 
 class RegularizerProjectionMixin:
     """
@@ -74,6 +165,13 @@ class RegularizerProjectionMixin:
         )
 
 
+
+@METRIC_REGISTRY.register_class(
+    name="hinge_std",
+    default_config=DEFAULT_HINGE_STD_LOSS_METRIC_CONFIG,
+    type_field="metric_type",
+    field_resolutions=(PROJECTOR_FIELD,),
+)
 class HingeStdLossMetric(RegularizerProjectionMixin, nn.Module):
     """
     EB-JEPA hinge standard-deviation regularizer as one metric.
@@ -99,6 +197,13 @@ class HingeStdLossMetric(RegularizerProjectionMixin, nn.Module):
         return self.metric(self.vc_samples(rollout_output.encoded_states))
 
 
+
+@METRIC_REGISTRY.register_class(
+    name="covariance",
+    default_config=DEFAULT_COVARIANCE_LOSS_METRIC_CONFIG,
+    type_field="metric_type",
+    field_resolutions=(PROJECTOR_FIELD,),
+)
 class CovarianceLossMetric(RegularizerProjectionMixin, nn.Module):
     """
     EB-JEPA covariance regularizer as one metric.
@@ -123,6 +228,13 @@ class CovarianceLossMetric(RegularizerProjectionMixin, nn.Module):
         return self.metric(self.vc_samples(rollout_output.encoded_states))
 
 
+
+@METRIC_REGISTRY.register_class(
+    name="temporal_similarity",
+    default_config=DEFAULT_TEMPORAL_SIMILARITY_LOSS_METRIC_CONFIG,
+    type_field="metric_type",
+    field_resolutions=(PROJECTOR_FIELD,),
+)
 class TemporalSimilarityLossMetric(RegularizerProjectionMixin, nn.Module):
     """
     EB-JEPA temporal similarity regularizer as one metric.
@@ -145,6 +257,16 @@ class TemporalSimilarityLossMetric(RegularizerProjectionMixin, nn.Module):
         return self.metric(self.temporal_states(rollout_output.encoded_states))
 
 
+
+@METRIC_REGISTRY.register_class(
+    name="inverse_dynamics",
+    default_config=DEFAULT_INVERSE_DYNAMICS_LOSS_METRIC_CONFIG,
+    type_field="metric_type",
+    field_resolutions=(
+        PROJECTOR_FIELD,
+        INVERSE_DYNAMICS_MODEL_FIELD,
+    ),
+)
 class InverseDynamicsLossMetric(RegularizerProjectionMixin, nn.Module):
     """
     EB-JEPA inverse dynamics regularizer as one metric.
