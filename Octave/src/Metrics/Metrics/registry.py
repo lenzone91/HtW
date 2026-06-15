@@ -22,4 +22,5 @@ PREDICTION_COST_SUB_BUILD = SubBuildDeclaration(
     builder=PREDICTION_COST_BUILDER,
     build_method="one",
     type_field="prediction_cost_type",
+    forwarded_kwargs=(),
 )

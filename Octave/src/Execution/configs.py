@@ -6,6 +6,8 @@ DEFAULT_LIGHTNING_TRAINER_CONFIG = {
     "enable_checkpointing": True,
     "enable_progress_bar": True,
     "log_every_n_steps": 1,
+    "logger": None,
+    "callbacks": None,
 }
 
 

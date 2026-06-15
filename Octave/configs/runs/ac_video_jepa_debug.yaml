@@ -1,37 +1,37 @@
 datamodule:
   datasets:
     train:
-      dataset_type: two_rooms
-      device: cpu
-      size: 4
-      val_size: 4
-      batch_size: 1
-      sample_length: 4
-      n_steps: 8
-      img_size: 32
-      fix_wall: true
-      fix_wall_location: 16
-      fix_door_location: 10
+      two_rooms:
+        device: cpu
+        size: 4
+        val_size: 4
+        batch_size: 1
+        sample_length: 4
+        n_steps: 8
+        img_size: 32
+        fix_wall: true
+        fix_wall_location: 16
+        fix_door_location: 10
     val:
-      dataset_type: two_rooms
-      device: cpu
-      size: 4
-      val_size: 4
-      batch_size: 1
-      sample_length: 4
-      n_steps: 8
-      img_size: 32
-      fix_wall: true
-      fix_wall_location: 16
-      fix_door_location: 10
+      two_rooms:
+        device: cpu
+        size: 4
+        val_size: 4
+        batch_size: 1
+        sample_length: 4
+        n_steps: 8
+        img_size: 32
+        fix_wall: true
+        fix_wall_location: 16
+        fix_door_location: 10
     test: null
   collators:
     train:
-      collator_type: ac_video_jepa
-      transforms: []
+      ac_video_jepa:
+        transforms: []
     val:
-      collator_type: ac_video_jepa
-      transforms: []
+      ac_video_jepa:
+        transforms: []
     test: null
   dataloader_configs:
     train:
@@ -45,7 +45,6 @@ datamodule:
       num_workers: 0
       drop_last: false
     test: null
-
 module:
   module_type: ac_video_jepa
   components_config:
@@ -53,14 +52,20 @@ module:
     encoder:
       encoder_type: impala
       width: 1
-      stack_sizes: [4, 8, 8]
+      stack_sizes:
+      - 4
+      - 8
+      - 8
       num_blocks: 2
       dropout_rate: null
       layer_norm: false
       input_channels: 2
       final_ln: true
       mlp_output_dim: 32
-      input_shape: [2, 32, 32]
+      input_shape:
+      - 2
+      - 32
+      - 32
     action_encoder:
       action_encoder_type: identity
     predictor:
@@ -75,69 +80,13 @@ module:
     unroll_mode: autoregressive
     ctxt_window_time: 1
     return_all_steps: false
-  objective_config:
-    objective_type: ac_video_jepa
-    metric_set:
-      set_type: ac_video_jepa
-      strict: true
-      metric_to_input_names: null
-      metrics:
-        prediction_loss:
-          metric_type: autoregressive_prediction_loss
-          prediction_cost:
-            prediction_cost_type: square_loss_seq
-            use_projector: false
-        std_loss:
-          metric_type: hinge_std
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          std_margin: 1.0
-          first_t_only: false
-          spatial_as_samples: false
-        cov_loss:
-          metric_type: covariance
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          first_t_only: false
-          spatial_as_samples: false
-        sim_loss_t:
-          metric_type: temporal_similarity
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          after_projection: false
-        idm_loss:
-          metric_type: inverse_dynamics
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          inverse_dynamics_model:
-            enabled: true
-            hidden_dim: 16
-            action_dim: 2
-          after_projection: false
-    loss:
-      loss_type: weighted_metric
-      name: loss
-      strict: true
-      return_loss_terms: true
-      metric_weights:
-        prediction_loss: 1.0
-        cov_loss: 0.1
-        std_loss: 0.1
-        sim_loss_t: 0.1
-        idm_loss: 0.1
   optimizer_config:
     optimizer_type: adamw
     lr: 0.001
-    betas: [0.9, 0.999]
-    eps: 1.0e-8
+    betas:
+    - 0.9
+    - 0.999
+    eps: 1.0e-08
     weight_decay: 0.01
     amsgrad: false
     maximize: false
@@ -147,7 +96,62 @@ module:
     fused: null
   scheduler_config:
     enabled: false
-
+  metric_set_config:
+    set_type: ac_video_jepa
+    strict: true
+    metric_to_input_names: null
+    metrics:
+      prediction_loss:
+        metric_type: autoregressive_prediction_loss
+        prediction_cost:
+          prediction_cost_type: square_loss_seq
+          use_projector: false
+      std_loss:
+        metric_type: hinge_std
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        std_margin: 1.0
+        first_t_only: false
+        spatial_as_samples: false
+      cov_loss:
+        metric_type: covariance
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        first_t_only: false
+        spatial_as_samples: false
+      sim_loss_t:
+        metric_type: temporal_similarity
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        after_projection: false
+      idm_loss:
+        metric_type: inverse_dynamics
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        inverse_dynamics_model:
+          enabled: true
+          hidden_dim: 16
+          action_dim: 2
+        after_projection: false
+  loss_config:
+    loss_type: weighted_metric
+    name: loss
+    strict: true
+    return_loss_terms: true
+    metric_weights:
+      prediction_loss: 1.0
+      cov_loss: 0.1
+      std_loss: 0.1
+      sim_loss_t: 0.1
+      idm_loss: 0.1
 trainer:
   accelerator: cpu
   devices: 1
@@ -157,26 +161,22 @@ trainer:
   enable_checkpointing: true
   enable_model_summary: false
   log_every_n_steps: 1
-
 loggers:
   csv:
     save_dir: logs
     name: csv
     version: null
-    prefix: ""
+    prefix: ''
     flush_logs_every_n_steps: 1
-
 checkpoints:
   last:
     checkpoint_type: last
     dirpath: null
     filename: last
     every_n_epochs: 1
-
 resume:
   enabled: false
   checkpoint_path: null
-
 loading:
   module:
     enabled: false
@@ -186,7 +186,6 @@ loading:
     map_location: cpu
     state_dict_key: state_dict
     relative_to: run_dir
-
 setup:
   paths:
     run_root: Octave/runs

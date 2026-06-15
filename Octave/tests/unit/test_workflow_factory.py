@@ -16,6 +16,11 @@ class ToyObject:
         self.kwargs = kwargs
 
 
+class StrictToyObject:
+    def __init__(self, value: int = 1) -> None:
+        self.value = value
+
+
 def make_toy_registry() -> Registry:
     registry = Registry(object_family="toy")
     registry.add_entry(
@@ -200,6 +205,125 @@ def test_builder_resolves_one_sub_build() -> None:
     assert isinstance(obj.child, ToyObject)
     assert obj.child.value == 5
     assert "child_config" not in obj.kwargs
+
+
+def test_builder_does_not_pass_build_context_kwargs_to_constructors() -> None:
+    child_registry = Registry(object_family="child")
+    child_registry.add_entry(
+        name="child",
+        object_cls=StrictToyObject,
+        default_config={"value": 1},
+    )
+    child_builder = RegistryBuilder(registry=child_registry)
+    parent_registry = Registry(object_family="parent")
+    parent_registry.add_entry(
+        name="parent",
+        object_cls=ToyObject,
+        default_config={"child_config": {}},
+        sub_builds=(
+            SubBuildDeclaration(
+                source_key="child_config",
+                target_key="child",
+                builder=child_builder,
+                build_method="one",
+                type_name="child",
+                forwarded_kwargs=(),
+            ),
+        ),
+    )
+    parent_builder = RegistryBuilder(registry=parent_registry)
+
+    obj = parent_builder.build_one(
+        config={"child_config": {"value": 5}},
+        name="parent",
+        parent_only="not forwarded",
+    )
+
+    assert isinstance(obj.child, StrictToyObject)
+    assert obj.child.value == 5
+    assert "parent_only" not in obj.kwargs
+
+
+def test_builder_can_limit_forwarded_kwargs_for_sub_builds() -> None:
+    def resolve_value(
+        config,
+        runtime_context=None,
+        strict=True,
+        parent_only: int | None = None,
+    ):
+        return config["value"] + parent_only
+
+    child_registry = Registry(object_family="child")
+    child_registry.add_entry(
+        name="child",
+        object_cls=StrictToyObject,
+        default_config={"value": 1},
+        field_resolutions=(
+            FieldResolution(
+                target_key="value",
+                resolver=resolve_value,
+            ),
+        ),
+    )
+    child_builder = RegistryBuilder(registry=child_registry)
+    parent_registry = Registry(object_family="parent")
+    parent_registry.add_entry(
+        name="parent",
+        object_cls=ToyObject,
+        default_config={"child_config": {}},
+        sub_builds=(
+            SubBuildDeclaration(
+                source_key="child_config",
+                target_key="child",
+                builder=child_builder,
+                build_method="one",
+                type_name="child",
+                forwarded_kwargs=("parent_only",),
+            ),
+        ),
+    )
+    parent_builder = RegistryBuilder(registry=parent_registry)
+
+    obj = parent_builder.build_one(
+        config={"child_config": {"value": 5}},
+        name="parent",
+        parent_only=2,
+        ignored_context=10,
+    )
+
+    assert isinstance(obj.child, StrictToyObject)
+    assert obj.child.value == 7
+    assert "ignored_context" not in obj.kwargs
+
+
+def test_builder_propagates_strict_mode_to_sub_builders() -> None:
+    child_registry = make_toy_registry()
+    child_builder = RegistryBuilder(registry=child_registry, strict=True)
+    parent_registry = Registry(object_family="parent")
+    parent_registry.add_entry(
+        name="parent",
+        object_cls=ToyObject,
+        default_config={"child_config": {}},
+        sub_builds=(
+            SubBuildDeclaration(
+                source_key="child_config",
+                target_key="child",
+                builder=child_builder,
+                build_method="one",
+                type_name="toy",
+            ),
+        ),
+    )
+    parent_builder = RegistryBuilder(registry=parent_registry, strict=False)
+
+    with pytest.warns(UserWarning, match="Invalid config keys"):
+        obj = parent_builder.build_one(
+            config={"child_config": {"value": 1, "unknown": "bad"}},
+            name="parent",
+        )
+
+    assert obj is None
+    assert child_builder.strict is True
 
 
 def test_builder_resolves_phase_single_named_sub_build() -> None:

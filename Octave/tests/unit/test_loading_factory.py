@@ -7,9 +7,11 @@ from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.tests.unit.test_ac_video_jepa_module import make_module
 from Octave.src.Models.Loading.factory import (
     load_module_if_needed,
+)
+from Octave.src.Models.Loading.module_loading import (
+    load_module_from_lightning_checkpoint,
     resolve_checkpoint_path,
 )
-from Octave.src.Models.Loading.module_loading import load_module_from_lightning_checkpoint
 
 
 def make_runtime_context(tmp_path: Path) -> dict:
@@ -24,9 +26,11 @@ def test_resolve_checkpoint_path_resolves_relative_path(tmp_path: Path) -> None:
     runtime_context = make_runtime_context(tmp_path)
 
     resolved_path = resolve_checkpoint_path(
-        checkpoint_path="checkpoints/last.ckpt",
+        config={
+            "checkpoint_path": "checkpoints/last.ckpt",
+            "relative_to": "run_dir",
+        },
         runtime_context=runtime_context,
-        relative_to="run_dir",
     )
 
     assert resolved_path == str((tmp_path / "run" / "checkpoints" / "last.ckpt").resolve())
@@ -90,7 +94,7 @@ def test_load_module_if_needed_loads_enabled_module(tmp_path: Path) -> None:
 
 
 def test_load_module_if_needed_rejects_wrong_loading_type(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="Invalid loading type"):
+    with pytest.raises(RuntimeError, match="Unknown loading"):
         load_module_if_needed(
             module=make_module(),
             loading_config={

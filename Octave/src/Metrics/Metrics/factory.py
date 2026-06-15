@@ -1,3 +1,5 @@
+from . import prediction_metrics as _prediction_metrics  # noqa: F401
+from . import regularizer_metrics as _regularizer_metrics  # noqa: F401
 from .configs import DEFAULT_METRIC_CONFIGS
 from .registry import METRIC_REGISTRY
 from ...Workflow.Factory.builder import RegistryBuilder

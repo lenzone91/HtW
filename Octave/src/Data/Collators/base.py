@@ -34,6 +34,7 @@ class BaseCollator(ABC):
 
     def __init__(self, transforms: list[BaseBatchTransform] | None = None) -> None:
         self.transforms = transforms or []
+        self.check_transforms()
 
     def __call__(self, samples: list[dict]) -> dict:
         self.check_samples(samples)
@@ -55,6 +56,14 @@ class BaseCollator(ABC):
             batch = transform(batch)
 
         return batch
+
+    def check_transforms(self) -> None:
+        for index, transform in enumerate(self.transforms):
+            if not callable(transform):
+                raise TypeError(
+                    "Collator transforms must be callable, "
+                    f"but transform {index} has type {type(transform).__name__}."
+                )
 
     def check_samples(self, samples: list[dict]) -> None:
         if not isinstance(samples, list):

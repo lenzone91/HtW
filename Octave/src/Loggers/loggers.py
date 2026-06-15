@@ -4,7 +4,7 @@ from lightning.pytorch.loggers import CSVLogger, WandbLogger
 
 from .configs import DEFAULT_CSV_LOGGER_CONFIG, DEFAULT_WANDB_LOGGER_CONFIG
 from .registry import LOGGER_REGISTRY
-from ...Workflow.Factory.registry import FieldResolution
+from ..Workflow.Factory.registry import FieldResolution
 
 
 def resolve_logger_path(

@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from . import trainers  # noqa: F401
+from .configs import DEFAULT_LIGHTNING_TRAINER_CONFIG
 from .registry import TRAINER_REGISTRY
 from ..Workflow.Factory.builder import RegistryBuilder
 
@@ -70,19 +72,24 @@ def build_trainer(
     checkpoint_configs: dict,
     runtime_context: dict,
 ):
-    trainer_config = deepcopy(trainer_config)
+    user_trainer_config = deepcopy(trainer_config)
 
-    if "logger" in trainer_config:
+    if "logger" in user_trainer_config:
         raise KeyError(
             "Trainer config must not define 'logger'. "
             "Use the execution-level 'loggers' config instead."
         )
 
-    if "callbacks" in trainer_config:
+    if "callbacks" in user_trainer_config:
         raise KeyError(
             "Trainer config must not define 'callbacks'. "
             "Use the execution-level 'checkpoints' and logger callback configs instead."
         )
+
+    trainer_config = {
+        **deepcopy(DEFAULT_LIGHTNING_TRAINER_CONFIG),
+        **user_trainer_config,
+    }
 
     loggers = build_loggers(
         logger_configs=logger_configs,

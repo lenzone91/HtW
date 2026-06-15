@@ -1,7 +1,7 @@
 import torch
 
-from . import schedulers  # noqa: F401
-from .schedulers import ConfiguredSchedulerBuilder, DisabledSchedulerBuilder
+from . import scheduler  # noqa: F401
+from .scheduler import ConfiguredSchedulerBuilder, DisabledSchedulerBuilder
 from ...Workflow.Factory.builder import RegistryBuilder
 from .registry import SCHEDULER_REGISTRY
 

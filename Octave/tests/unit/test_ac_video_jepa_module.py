@@ -3,8 +3,11 @@ from copy import deepcopy
 import pytest
 import torch
 
-from Octave.src.Metrics.configs import DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG
-from Octave.src.Metrics.factory import build_ac_video_jepa_objective
+from Octave.src.Metrics.factory import build_ac_video_jepa_metric_stack
+from Octave.src.Metrics.Loss.configs import DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG
+from Octave.src.Metrics.MetricSets.configs import (
+    DEFAULT_AC_VIDEO_JEPA_METRIC_SET_CONFIG,
+)
 from Octave.src.Models.Model.ac_video_jepa.configs import (
     DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG,
 )
@@ -26,6 +29,7 @@ def make_tiny_components_config() -> dict:
     config["encoder"].update(
         {
             "stack_sizes": [4, 8, 8],
+            "input_channels": 2,
             "input_shape": [2, 32, 32],
             "mlp_output_dim": 32,
         }
@@ -39,16 +43,22 @@ def make_tiny_components_config() -> dict:
     return config
 
 
-def make_tiny_objective_config() -> dict:
-    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_OBJECTIVE_CONFIG)
-    config["metric_set"]["metrics"]["idm_loss"]["inverse_dynamics_model"].update(
+def make_tiny_metric_set_config() -> dict:
+    config = deepcopy(DEFAULT_AC_VIDEO_JEPA_METRIC_SET_CONFIG)
+    config["metrics"]["idm_loss"]["inverse_dynamics_model"].update(
         {
             "hidden_dim": 16,
             "action_dim": 2,
         }
     )
-    config["loss"]["metric_weights"].update(
+    return config
+
+
+def make_tiny_loss_config() -> dict:
+    config = deepcopy(DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG)
+    config["metric_weights"].update(
         {
+            "prediction_loss": 1.0,
             "cov_loss": 0.1,
             "std_loss": 0.1,
             "sim_loss_t": 0.1,
@@ -86,8 +96,9 @@ def make_batch() -> dict:
 def make_module() -> AcVideoJepaModule:
     components = build_ac_video_jepa_components(config=make_tiny_components_config())
     rollout = build_latent_rollout(config=make_rollout_config())
-    objective = build_ac_video_jepa_objective(
-        config=make_tiny_objective_config(),
+    metric_stack = build_ac_video_jepa_metric_stack(
+        metric_set_config=make_tiny_metric_set_config(),
+        loss_config=make_tiny_loss_config(),
         encoder_shape=components["encoder_shape"],
     )
     optimizer_config = deepcopy(DEFAULT_ADAMW_CONFIG)
@@ -101,7 +112,8 @@ def make_module() -> AcVideoJepaModule:
         predictor=components["predictor"],
         encoder_shape=components["encoder_shape"],
         rollout=rollout,
-        objective=objective,
+        metric_set=metric_stack["metric_set"],
+        loss=metric_stack["loss"],
         optimizer_builder=optimizer_builder,
         scheduler_builder=scheduler_builder,
     )
@@ -111,7 +123,8 @@ def make_tiny_module_config() -> dict:
     config = deepcopy(DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG)
     config["components_config"] = make_tiny_components_config()
     config["rollout_config"] = make_rollout_config()
-    config["objective_config"] = make_tiny_objective_config()
+    config["metric_set_config"] = make_tiny_metric_set_config()
+    config["loss_config"] = make_tiny_loss_config()
     config["optimizer_config"]["lr"] = 1e-3
     return config
 

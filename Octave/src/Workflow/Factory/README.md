@@ -33,6 +33,13 @@ Objects built by this layer receive constructor-ready keyword arguments.
 Runtime-dependent values must be made explicit through `runtime_context` and
 declared `FieldResolution` objects.
 
+Extra keyword arguments passed to `build_one` or `build_named` are build
+context. They are available to field resolvers and eligible sub-builds, but
+they are not injected into constructors. A `SubBuildDeclaration` may set
+`forwarded_kwargs` to control which context keys are forwarded to its child
+builder; `None` keeps the default behavior of forwarding all context keys, and
+an empty tuple forwards none.
+
 ## Migration Rule
 
 Do not wire a subsystem to this layer until that subsystem has focused unit

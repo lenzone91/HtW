@@ -63,10 +63,12 @@ def test_run_configs_use_safe_cuda_dataloader_settings() -> None:
     ]
 
     for config in run_configs:
-        for phase, dataset_config in config["datamodule"]["datasets"].items():
-            if dataset_config is None:
+        for phase, phase_dataset_config in config["datamodule"]["datasets"].items():
+            if phase_dataset_config is None:
                 continue
 
+            assert len(phase_dataset_config) == 1
+            dataset_config = next(iter(phase_dataset_config.values()))
             dataloader_config = config["datamodule"]["dataloader_configs"][phase]
 
             if dataset_config["device"] == "cuda":
@@ -78,19 +80,20 @@ def test_ac_video_jepa_train_config_matches_ac_model_contract() -> None:
     config = load_run_config("ac_video_jepa_train.yaml")
     components_config = config["module"]["components_config"]
     rollout_config = config["module"]["rollout_config"]
-    objective_config = config["module"]["objective_config"]
+    metric_set_config = config["module"]["metric_set_config"]
+    loss_config = config["module"]["loss_config"]
 
     assert components_config["model_type"] == "ac_video_jepa"
     assert components_config["encoder"]["encoder_type"] == "impala"
     assert components_config["predictor"]["predictor_type"] == "rnn"
     assert rollout_config["rollout_type"] == "latent"
     assert rollout_config["nsteps"] == 8
-    assert objective_config["objective_type"] == "ac_video_jepa"
-    assert objective_config["metric_set"]["metrics"]["prediction_loss"][
+    assert metric_set_config["set_type"] == "ac_video_jepa"
+    assert metric_set_config["metrics"]["prediction_loss"][
         "metric_type"
     ] == "autoregressive_prediction_loss"
-    assert objective_config["loss"]["metric_weights"]["cov_loss"] == 8.0
-    assert objective_config["loss"]["metric_weights"]["std_loss"] == 16.0
+    assert loss_config["metric_weights"]["cov_loss"] == 8.0
+    assert loss_config["metric_weights"]["std_loss"] == 16.0
 
 
 def test_ac_video_jepa_validate_config_loads_module_without_resume() -> None:
@@ -108,5 +111,5 @@ def test_ac_video_jepa_validate_config_uses_validation_phase_only() -> None:
     config = load_run_config("ac_video_jepa_validate.yaml")
 
     assert config["datamodule"]["datasets"]["train"] is None
-    assert config["datamodule"]["datasets"]["val"]["dataset_type"] == "two_rooms"
-    assert config["datamodule"]["collators"]["val"]["collator_type"] == "ac_video_jepa"
+    assert set(config["datamodule"]["datasets"]["val"]) == {"two_rooms"}
+    assert set(config["datamodule"]["collators"]["val"]) == {"ac_video_jepa"}

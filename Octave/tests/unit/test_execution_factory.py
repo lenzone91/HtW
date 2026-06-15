@@ -5,6 +5,7 @@ from Octave.src.Execution.factory import (
     build_validation_objects,
     get_trainer_loggers,
 )
+from Octave.src.Execution.registry import TRAINER_REGISTRY
 
 
 class DummyTrainer:
@@ -23,7 +24,11 @@ class DummyModule:
 
 
 def test_build_trainer_uses_execution_level_loggers(monkeypatch) -> None:
-    monkeypatch.setattr(execution_factory, "Trainer", DummyTrainer)
+    monkeypatch.setattr(
+        TRAINER_REGISTRY.get_entry("lightning"),
+        "object_cls",
+        DummyTrainer,
+    )
     monkeypatch.setattr(
         execution_factory,
         "build_loggers",
@@ -45,7 +50,14 @@ def test_build_trainer_uses_execution_level_loggers(monkeypatch) -> None:
     assert isinstance(trainer, DummyTrainer)
     assert trainer.logger == ["logger"]
     assert trainer.callbacks == ["callback"]
-    assert trainer.kwargs == {"max_epochs": 1}
+    assert trainer.kwargs == {
+        "max_epochs": 1,
+        "accelerator": "auto",
+        "devices": "auto",
+        "enable_checkpointing": True,
+        "enable_progress_bar": True,
+        "log_every_n_steps": 1,
+    }
 
 
 def test_build_training_objects_delegates_to_subsystem_factories(monkeypatch) -> None:

@@ -1,6 +1,14 @@
 from . import two_rooms  # noqa: F401
 from .configs import DEFAULT_DATASETS_CONFIG, DEFAULT_TWO_ROOMS_DATASET_CONFIG
-from .registry import DATASET_BUILDER
+from .registry import DATASET_REGISTRY
+from ...Workflow.Factory.builder import RegistryBuilder
+
+
+def make_dataset_builder(strict: bool = True) -> RegistryBuilder:
+    return RegistryBuilder(
+        registry=DATASET_REGISTRY,
+        strict=strict,
+    )
 
 
 def build_dataset_from_config(
@@ -9,9 +17,9 @@ def build_dataset_from_config(
     runtime_context: dict | None = None,
     strict: bool = True,
 ):
-    DATASET_BUILDER.strict = strict
+    builder = make_dataset_builder(strict=strict)
 
-    return DATASET_BUILDER.build_one(
+    return builder.build_one(
         config=dataset_config,
         runtime_context=runtime_context,
         name=dataset_name,
@@ -23,9 +31,9 @@ def build_datasets(
     runtime_context: dict | None = None,
     strict: bool = True,
 ) -> dict:
-    DATASET_BUILDER.strict = strict
+    builder = make_dataset_builder(strict=strict)
 
-    return DATASET_BUILDER.build_named(
+    return builder.build_named(
         configs=dataset_configs or DEFAULT_DATASETS_CONFIG,
         runtime_context=runtime_context,
     )

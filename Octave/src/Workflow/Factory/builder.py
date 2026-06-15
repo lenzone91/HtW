@@ -122,9 +122,7 @@ class RegistryBuilder:
         if config is None:
             return None
 
-        constructor_kwargs = dict(config)
-        constructor_kwargs.update(kwargs)
-        return entry.object_cls(*args, **constructor_kwargs)
+        return entry.object_cls(*args, **config)
 
     def prepare_entry_config(
         self,
@@ -294,23 +292,29 @@ class RegistryBuilder:
         *args,
         **kwargs,
     ):
+        forwarded_kwargs = self.resolve_sub_build_kwargs(
+            sub_build=sub_build,
+            kwargs=kwargs,
+        )
+        builder = self.resolve_sub_builder(sub_build.builder)
+
         if sub_build.build_method == "one":
-            return sub_build.builder.build_one(
+            return builder.build_one(
                 config,
                 runtime_context,
                 sub_build.type_name,
                 sub_build.type_field,
                 *args,
-                **kwargs,
+                **forwarded_kwargs,
             )
 
         if sub_build.build_method == "named":
-            return sub_build.builder.build_named(
+            return builder.build_named(
                 config,
                 runtime_context,
                 sub_build.type_field,
                 *args,
-                **kwargs,
+                **forwarded_kwargs,
             )
 
         if sub_build.build_method == "phase_single_named":
@@ -319,13 +323,38 @@ class RegistryBuilder:
                 config=config,
                 runtime_context=runtime_context,
                 *args,
-                **kwargs,
+                **forwarded_kwargs,
             )
 
         self.handle_error(
             f"Unknown sub-build method '{sub_build.build_method}'."
         )
         return None
+
+    def resolve_sub_builder(self, builder):
+        if not isinstance(builder, RegistryBuilder):
+            return builder
+
+        return RegistryBuilder(
+            registry=builder.registry,
+            strict=self.strict,
+            check_default_keys=builder.check_default_keys,
+            type_field=builder.type_field,
+        )
+
+    def resolve_sub_build_kwargs(
+        self,
+        sub_build: SubBuildDeclaration,
+        kwargs: dict,
+    ) -> dict:
+        if sub_build.forwarded_kwargs is None:
+            return dict(kwargs)
+
+        return {
+            key: kwargs[key]
+            for key in sub_build.forwarded_kwargs
+            if key in kwargs
+        }
 
     def build_phase_single_named_sub_objects(
         self,
@@ -335,13 +364,14 @@ class RegistryBuilder:
         *args,
         **kwargs,
     ) -> dict | None:
+        builder = self.resolve_sub_builder(sub_build.builder)
         phase_objects = {}
         for phase, phase_config in config.items():
             if phase_config is None:
                 phase_objects[phase] = None
                 continue
 
-            built_objects = sub_build.builder.build_named(
+            built_objects = builder.build_named(
                 phase_config,
                 runtime_context,
                 sub_build.type_field,

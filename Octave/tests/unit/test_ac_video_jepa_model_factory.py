@@ -57,7 +57,7 @@ def test_build_ac_video_jepa_components_rejects_unknown_top_level_key() -> None:
         "regularizer": {},
     }
 
-    with pytest.raises(KeyError, match="Unknown AcVideoJepa components config keys"):
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
         build_ac_video_jepa_components(config=config)
 
 

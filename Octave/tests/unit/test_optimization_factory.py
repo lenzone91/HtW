@@ -55,7 +55,7 @@ def test_build_optimizer_rejects_unknown_optimizer_type() -> None:
         "optimizer_type": "unknown",
     }
 
-    with pytest.raises(KeyError, match="Unknown optimizer_type"):
+    with pytest.raises(RuntimeError, match="Unknown optimizer"):
         build_optimizer(parameters=[parameter], optimizer_config=config)
 
 
@@ -66,5 +66,5 @@ def test_build_optimizer_rejects_unknown_config_key() -> None:
         "unknown": 1,
     }
 
-    with pytest.raises(KeyError, match="Unknown optimizer config keys"):
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
         build_optimizer(parameters=[parameter], optimizer_config=config)

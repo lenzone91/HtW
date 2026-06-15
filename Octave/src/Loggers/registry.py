@@ -1,5 +1,5 @@
-from ...Workflow.Factory.builder import RegistryBuilder
-from ...Workflow.Factory.registry import Registry
+from ..Workflow.Factory.builder import RegistryBuilder
+from ..Workflow.Factory.registry import Registry
 
 
 LOGGER_REGISTRY = Registry(object_family="logger")

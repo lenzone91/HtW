@@ -10,7 +10,8 @@ def build_checkpoint_callbacks(
     runtime_context: dict | None = None,
     strict: bool = True,
 ) -> list[NamedModelCheckpoint]:
-    checkpoint_configs = checkpoint_configs or DEFAULT_CHECKPOINT_CONFIGS
+    if checkpoint_configs is None:
+        checkpoint_configs = DEFAULT_CHECKPOINT_CONFIGS
 
     if checkpoint_configs == {}:
         return []
@@ -55,7 +56,9 @@ def build_checkpoint_callback(
     )
 
     return builder.build_one(
-        config=checkpoint_config,
+        config={
+            **checkpoint_config,
+            "checkpoint_name": checkpoint_name,
+        },
         runtime_context=runtime_context,
-        checkpoint_name=checkpoint_name,
     )

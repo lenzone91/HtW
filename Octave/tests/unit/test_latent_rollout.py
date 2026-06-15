@@ -10,7 +10,6 @@ from Octave.src.Models.Model.ac_video_jepa.configs import (
 from Octave.src.Models.Model.ac_video_jepa.factory import (
     build_ac_video_jepa_components,
 )
-from Octave.src.Models.Modules.ac_video_jepa_module import AcVideoJepaModule
 from Octave.src.Rollouts.configs import DEFAULT_LATENT_ROLLOUT_CONFIG
 from Octave.src.Rollouts.factory import build_latent_rollout
 from Octave.src.Rollouts.latent_rollout import LatentRollout, LatentRolloutOutput
@@ -91,21 +90,10 @@ def make_parallel_runtime() -> FakeJepaRuntime:
 
 def make_tiny_runtime():
     components = build_ac_video_jepa_components(config=make_tiny_components_config())
-    rollout = LatentRollout(
-        nsteps=2,
-        unroll_mode="autoregressive",
-        ctxt_window_time=1,
-        return_all_steps=False,
-    )
-    return AcVideoJepaModule(
+    return FakeJepaRuntime(
         encoder=components["encoder"],
         action_encoder=components["action_encoder"],
         predictor=components["predictor"],
-        encoder_shape=components["encoder_shape"],
-        rollout=rollout,
-        objective=nn.Identity(),
-        optimizer_builder=lambda parameters: torch.optim.AdamW(parameters, lr=1e-3),
-        scheduler_builder=lambda optimizer: None,
     )
 
 

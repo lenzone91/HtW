@@ -109,25 +109,25 @@ def test_build_collator_does_not_mutate_input_config() -> None:
     assert config == original_config
 
 
-def test_build_collator_rejects_unknown_collator_type() -> None:
+def test_build_collators_rejects_unknown_collator_name() -> None:
     config = {
-        **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
-        "collator_type": "unknown",
+        "unknown": deepcopy(DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG),
     }
 
-    with pytest.raises(KeyError, match="Unknown collator_type"):
+    with pytest.raises(RuntimeError, match="Unknown collator"):
         build_collator(config=config)
 
 
-def test_build_collator_strict_false_ignores_unknown_config_key() -> None:
+def test_build_collator_strict_false_returns_none_for_unknown_config_key() -> None:
     config = {
         **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
-        "unknown": "ignored",
+        "unknown": "bad",
     }
 
-    collator = build_collator(config=config, strict=False)
+    with pytest.warns(UserWarning, match="Invalid config keys"):
+        collator = build_collator(config=config, strict=False)
 
-    assert isinstance(collator, AcVideoJepaCollator)
+    assert collator is None
 
 
 def test_build_collator_rejects_non_callable_transform() -> None:

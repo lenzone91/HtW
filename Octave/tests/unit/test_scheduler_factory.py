@@ -68,7 +68,7 @@ def test_build_scheduler_rejects_unknown_scheduler_type() -> None:
         "scheduler_type": "unknown",
     }
 
-    with pytest.raises(KeyError, match="Unknown scheduler_type"):
+    with pytest.raises(RuntimeError, match="Unknown scheduler"):
         build_scheduler(
             optimizer=make_optimizer(),
             scheduler_config=config,
@@ -81,7 +81,7 @@ def test_build_scheduler_rejects_unknown_config_key() -> None:
         "unknown": 1,
     }
 
-    with pytest.raises(KeyError, match="Unknown scheduler config keys"):
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
         build_scheduler(
             optimizer=make_optimizer(),
             scheduler_config=config,

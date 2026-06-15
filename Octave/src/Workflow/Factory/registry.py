@@ -18,6 +18,7 @@ class SubBuildDeclaration:
     type_name: str | None = None
     type_field: str | None = None
     remove_source: bool = True
+    forwarded_kwargs: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)

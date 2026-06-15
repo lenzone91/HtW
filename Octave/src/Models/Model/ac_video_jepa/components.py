@@ -53,6 +53,11 @@ class AcVideoJepaComponents:
         }
 
     def build_encoder(self, encoder_config: dict) -> ImpalaEncoder:
+        self.check_nested_config_keys(
+            section_name="encoder",
+            config=encoder_config,
+            default_config=DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG["encoder"],
+        )
         encoder_type = encoder_config["encoder_type"]
 
         if encoder_type != "impala":
@@ -66,6 +71,11 @@ class AcVideoJepaComponents:
         return ImpalaEncoder(**kwargs)
 
     def build_action_encoder(self, action_encoder_config: dict) -> nn.Module:
+        self.check_nested_config_keys(
+            section_name="action_encoder",
+            config=action_encoder_config,
+            default_config=DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG["action_encoder"],
+        )
         action_encoder_type = action_encoder_config["action_encoder_type"]
 
         if action_encoder_type != "identity":
@@ -79,6 +89,11 @@ class AcVideoJepaComponents:
         encoder: ImpalaEncoder,
         encoder_dim: int,
     ) -> RNNPredictor:
+        self.check_nested_config_keys(
+            section_name="predictor",
+            config=predictor_config,
+            default_config=DEFAULT_AC_VIDEO_JEPA_COMPONENTS_CONFIG["predictor"],
+        )
         predictor_type = predictor_config["predictor_type"]
 
         if predictor_type != "rnn":
@@ -117,3 +132,18 @@ class AcVideoJepaComponents:
             "height": output_height,
             "width": output_width,
         }
+
+    @staticmethod
+    def check_nested_config_keys(
+        section_name: str,
+        config: dict,
+        default_config: dict,
+    ) -> None:
+        unknown_keys = set(config) - set(default_config)
+
+        if unknown_keys:
+            raise KeyError(
+                f"Unknown AcVideoJepa {section_name} config keys: "
+                f"{sorted(unknown_keys)}. "
+                f"Allowed keys are: {sorted(default_config)}."
+            )

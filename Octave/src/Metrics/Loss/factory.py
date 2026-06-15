@@ -1,3 +1,4 @@
+from . import loss as _loss  # noqa: F401
 from .configs import DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG
 from .registry import LOSS_REGISTRY
 from ...Workflow.Factory.builder import RegistryBuilder

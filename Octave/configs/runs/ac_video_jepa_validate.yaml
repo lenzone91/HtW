@@ -2,29 +2,29 @@ datamodule:
   datasets:
     train: null
     val:
-      dataset_type: two_rooms
-      device: cuda
-      size: 10000
-      val_size: 10000
-      batch_size: 1
-      sample_length: 17
-      n_steps: 91
-      img_size: 64
-      fix_wall: true
-      fix_wall_location: 32
-      fix_door_location: 10
-      normalize: true
-      cross_wall_rate: 0.1
-      expert_cross_wall_rate: 0.0
-      wall_bump_rate: 0.0
-      dup_traj_rate: 0.0
-      num_train_layouts: -1
+      two_rooms:
+        device: cuda
+        size: 10000
+        val_size: 10000
+        batch_size: 1
+        sample_length: 17
+        n_steps: 91
+        img_size: 64
+        fix_wall: true
+        fix_wall_location: 32
+        fix_door_location: 10
+        normalize: true
+        cross_wall_rate: 0.1
+        expert_cross_wall_rate: 0.0
+        wall_bump_rate: 0.0
+        dup_traj_rate: 0.0
+        num_train_layouts: -1
     test: null
   collators:
     train: null
     val:
-      collator_type: ac_video_jepa
-      transforms: []
+      ac_video_jepa:
+        transforms: []
     test: null
   dataloader_configs:
     train: null
@@ -36,7 +36,6 @@ datamodule:
       persistent_workers: false
       drop_last: true
     test: null
-
 module:
   module_type: ac_video_jepa
   components_config:
@@ -44,14 +43,20 @@ module:
     encoder:
       encoder_type: impala
       width: 1
-      stack_sizes: [16, 32, 32]
+      stack_sizes:
+      - 16
+      - 32
+      - 32
       num_blocks: 2
       dropout_rate: null
       layer_norm: false
       input_channels: 2
       final_ln: true
       mlp_output_dim: 512
-      input_shape: [2, 64, 64]
+      input_shape:
+      - 2
+      - 64
+      - 64
     action_encoder:
       action_encoder_type: identity
     predictor:
@@ -66,70 +71,14 @@ module:
     unroll_mode: autoregressive
     ctxt_window_time: 1
     return_all_steps: false
-  objective_config:
-    objective_type: ac_video_jepa
-    metric_set:
-      set_type: ac_video_jepa
-      strict: true
-      metric_to_input_names: null
-      metrics:
-        prediction_loss:
-          metric_type: autoregressive_prediction_loss
-          prediction_cost:
-            prediction_cost_type: square_loss_seq
-            use_projector: false
-        std_loss:
-          metric_type: hinge_std
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          std_margin: 1.0
-          first_t_only: false
-          spatial_as_samples: false
-        cov_loss:
-          metric_type: covariance
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          first_t_only: false
-          spatial_as_samples: false
-        sim_loss_t:
-          metric_type: temporal_similarity
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          after_projection: false
-        idm_loss:
-          metric_type: inverse_dynamics
-          projector:
-            enabled: false
-            mlp_spec: null
-            hidden_multiplier: 4
-          inverse_dynamics_model:
-            enabled: true
-            hidden_dim: 256
-            action_dim: 2
-          after_projection: false
-    loss:
-      loss_type: weighted_metric
-      name: loss
-      strict: true
-      return_loss_terms: true
-      metric_weights:
-        prediction_loss: 1.0
-        cov_loss: 8.0
-        std_loss: 16.0
-        sim_loss_t: 12.0
-        idm_loss: 1.0
   optimizer_config:
     optimizer_type: adamw
     lr: 0.001
-    betas: [0.9, 0.999]
-    eps: 1.0e-8
-    weight_decay: 1.0e-5
+    betas:
+    - 0.9
+    - 0.999
+    eps: 1.0e-08
+    weight_decay: 1.0e-05
     amsgrad: false
     maximize: false
     foreach: null
@@ -138,14 +87,68 @@ module:
     fused: null
   scheduler_config:
     enabled: false
-
+  metric_set_config:
+    set_type: ac_video_jepa
+    strict: true
+    metric_to_input_names: null
+    metrics:
+      prediction_loss:
+        metric_type: autoregressive_prediction_loss
+        prediction_cost:
+          prediction_cost_type: square_loss_seq
+          use_projector: false
+      std_loss:
+        metric_type: hinge_std
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        std_margin: 1.0
+        first_t_only: false
+        spatial_as_samples: false
+      cov_loss:
+        metric_type: covariance
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        first_t_only: false
+        spatial_as_samples: false
+      sim_loss_t:
+        metric_type: temporal_similarity
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        after_projection: false
+      idm_loss:
+        metric_type: inverse_dynamics
+        projector:
+          enabled: false
+          mlp_spec: null
+          hidden_multiplier: 4
+        inverse_dynamics_model:
+          enabled: true
+          hidden_dim: 256
+          action_dim: 2
+        after_projection: false
+  loss_config:
+    loss_type: weighted_metric
+    name: loss
+    strict: true
+    return_loss_terms: true
+    metric_weights:
+      prediction_loss: 1.0
+      cov_loss: 8.0
+      std_loss: 16.0
+      sim_loss_t: 12.0
+      idm_loss: 1.0
 trainer:
   accelerator: auto
   devices: 1
   precision: bf16-mixed
   enable_checkpointing: false
   enable_model_summary: false
-
 loggers:
   wandb:
     project: htw-ac-video-jepa
@@ -165,16 +168,13 @@ loggers:
       direct_log: true
       step_metric: trainer/global_step
       metric_patterns:
-        - val/*
-        - test/*
+      - val/*
+      - test/*
       require_wandb_logger: true
-
 checkpoints: {}
-
 resume:
   enabled: false
   checkpoint_path: null
-
 loading:
   module:
     enabled: true
@@ -184,7 +184,6 @@ loading:
     map_location: cpu
     state_dict_key: state_dict
     relative_to: run_root
-
 setup:
   paths:
     run_root: Octave/runs

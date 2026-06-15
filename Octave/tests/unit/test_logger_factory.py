@@ -11,9 +11,9 @@ from Octave.src.Loggers.factory import (
     build_loggers,
     get_wandb_metrics_config,
     get_wandb_watch_config,
-    resolve_logger_path,
     watch_module_with_wandb_loggers,
 )
+from Octave.src.Loggers.loggers import resolve_logger_path
 from Octave.src.Loggers.wandb_metrics import (
     WandbScalarMetricsCallback,
     collect_prefixed_scalar_metrics,
@@ -277,7 +277,7 @@ def test_collect_prefixed_scalar_metrics_ignores_non_scalars() -> None:
 
 
 def test_build_loggers_rejects_unknown_logger() -> None:
-    with pytest.raises(KeyError, match="Unknown logger"):
+    with pytest.raises(RuntimeError, match="Unknown logger"):
         build_loggers(logger_configs={"unknown": {}})
 
 

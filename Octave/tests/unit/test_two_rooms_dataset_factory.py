@@ -6,11 +6,14 @@ from eb_jepa.datasets.two_rooms.wall_dataset import WallDatasetConfig
 
 from Octave.src.Data.Datasets.configs import DEFAULT_DATASETS_CONFIG
 from Octave.src.Data.Datasets.factory import (
-    TwoRoomsDatasetBuilder,
     build_datasets,
     build_two_rooms_dataset,
+    make_dataset_builder,
 )
-from Octave.src.Data.Datasets.two_rooms import WallDatasetWrapper
+from Octave.src.Data.Datasets.two_rooms import (
+    WallDatasetWrapper,
+    resolve_wall_dataset_config,
+)
 
 
 def make_tiny_two_rooms_config() -> dict:
@@ -23,11 +26,8 @@ def make_tiny_two_rooms_config() -> dict:
     }
 
 
-def test_two_rooms_dataset_builder_builds_wall_dataset_config_from_plain_dict() -> None:
-    builder = TwoRoomsDatasetBuilder()
-
-    config = builder.prepare_config(make_tiny_two_rooms_config())
-    wall_config = builder.build_wall_dataset_config(config)
+def test_resolve_wall_dataset_config_builds_wall_dataset_config_from_plain_dict() -> None:
+    wall_config = resolve_wall_dataset_config(config=make_tiny_two_rooms_config())
 
     assert isinstance(wall_config, WallDatasetConfig)
     assert wall_config.device == "cpu"
@@ -65,15 +65,15 @@ def test_build_datasets_does_not_mutate_input_config() -> None:
     assert dataset_configs == original_dataset_configs
 
 
-def test_two_rooms_dataset_builder_rejects_unknown_config_key() -> None:
-    builder = TwoRoomsDatasetBuilder()
+def test_dataset_builder_rejects_unknown_config_key() -> None:
+    builder = make_dataset_builder()
     config = {
         **make_tiny_two_rooms_config(),
         "unknown_key": "bad",
     }
 
-    with pytest.raises(KeyError, match="Unknown Two Rooms dataset config keys"):
-        builder.prepare_config(config)
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
+        builder.build_one(config=config, name="two_rooms")
 
 
 def test_build_datasets_rejects_unknown_dataset_name() -> None:
@@ -81,7 +81,7 @@ def test_build_datasets_rejects_unknown_dataset_name() -> None:
         "unknown_dataset": make_tiny_two_rooms_config(),
     }
 
-    with pytest.raises(KeyError, match="Unknown dataset"):
+    with pytest.raises(RuntimeError, match="Unknown dataset"):
         build_datasets(dataset_configs=dataset_configs)
 
 

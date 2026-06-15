@@ -50,15 +50,16 @@ def make_base_datamodule() -> BaseDataModule:
 def make_tiny_datamodule_config() -> dict:
     config = deepcopy(DEFAULT_AC_VIDEO_JEPA_DATAMODULE_CONFIG)
     config["datasets"]["train"] = {
-        "dataset_type": "two_rooms",
-        "device": "cpu",
-        "size": 2,
-        "batch_size": 1,
-        "sample_length": 4,
-        "n_steps": 8,
-        "img_size": 32,
-        "fix_wall_location": 16,
-        "fix_door_location": 10,
+        "two_rooms": {
+            "device": "cpu",
+            "size": 2,
+            "batch_size": 1,
+            "sample_length": 4,
+            "n_steps": 8,
+            "img_size": 32,
+            "fix_wall_location": 16,
+            "fix_door_location": 10,
+        },
     }
     config["dataloader_configs"]["train"] = {
         "batch_size": 2,
@@ -161,27 +162,28 @@ def test_build_ac_video_jepa_datamodule_rejects_unknown_top_level_key() -> None:
         "unknown": {},
     }
 
-    with pytest.raises(KeyError, match="Unknown DataModule config keys"):
+    with pytest.raises(RuntimeError, match="Invalid config keys"):
         build_ac_video_jepa_datamodule(config=config)
 
 
-def test_build_ac_video_jepa_datamodule_passes_strict_to_collator_factory() -> None:
+def test_build_ac_video_jepa_datamodule_passes_strict_to_nested_factories() -> None:
     config = make_tiny_datamodule_config()
-    config["collators"]["train"] = {
-        **config["collators"]["train"],
-        "unknown": "ignored",
+    config["collators"]["train"]["ac_video_jepa"] = {
+        **config["collators"]["train"]["ac_video_jepa"],
+        "unknown": "bad",
     }
 
-    datamodule = build_ac_video_jepa_datamodule(config=config, strict=False)
+    with pytest.warns(UserWarning, match="Invalid config keys"):
+        datamodule = build_ac_video_jepa_datamodule(config=config, strict=False)
 
-    assert isinstance(datamodule.collators["train"], AcVideoJepaCollator)
+    assert datamodule is None
 
 
 def test_build_ac_video_jepa_datamodule_rejects_unknown_phase() -> None:
     config = make_tiny_datamodule_config()
     config["datasets"]["predict"] = None
 
-    with pytest.raises(KeyError, match="Unknown phases"):
+    with pytest.raises(KeyError, match="must define phases"):
         build_ac_video_jepa_datamodule(config=config)
 
 
@@ -198,7 +200,7 @@ def test_build_ac_video_jepa_datamodule_rejects_cuda_dataset_when_unavailable(
 ) -> None:
     monkeypatch.setattr(datamodule_factory.torch.cuda, "is_available", lambda: False)
     config = make_tiny_datamodule_config()
-    config["datasets"]["train"]["device"] = "cuda"
+    config["datasets"]["train"]["two_rooms"]["device"] = "cuda"
     config["dataloader_configs"]["train"]["num_workers"] = 0
 
     with pytest.raises(RuntimeError, match="torch.cuda.is_available\\(\\) is False"):
@@ -210,7 +212,7 @@ def test_build_ac_video_jepa_datamodule_rejects_cuda_dataset_with_workers(
 ) -> None:
     monkeypatch.setattr(datamodule_factory.torch.cuda, "is_available", lambda: True)
     config = make_tiny_datamodule_config()
-    config["datasets"]["train"]["device"] = "cuda"
+    config["datasets"]["train"]["two_rooms"]["device"] = "cuda"
     config["dataloader_configs"]["train"]["num_workers"] = 1
 
     with pytest.raises(ValueError, match="CUDA dataset sampling with num_workers > 0"):

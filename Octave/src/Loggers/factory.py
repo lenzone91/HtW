@@ -11,7 +11,7 @@ from .configs import (
 )
 from .registry import LOGGER_REGISTRY
 from .wandb_metrics import WandbScalarMetricsCallback
-from ...Workflow.Factory.builder import RegistryBuilder
+from ..Workflow.Factory.builder import RegistryBuilder
 
 
 def build_loggers(
@@ -30,6 +30,8 @@ def build_loggers(
             f"got {type(logger_configs).__name__}."
         )
 
+    validate_logger_nested_configs(logger_configs=logger_configs)
+
     built_loggers = []
 
     for logger_name, logger_config in deepcopy(logger_configs).items():
@@ -43,6 +45,11 @@ def build_loggers(
         )
 
     return built_loggers
+
+
+def validate_logger_nested_configs(logger_configs: dict) -> None:
+    get_wandb_watch_config(logger_configs)
+    get_wandb_metrics_config(logger_configs)
 
 
 def build_logger(
