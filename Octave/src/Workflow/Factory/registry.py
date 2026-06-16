@@ -58,9 +58,8 @@ class Registry:
     Registry of buildable objects for one object family.
     """
 
-    def __init__(self, object_family: str, strict: bool = True) -> None:
+    def __init__(self, object_family: str) -> None:
         self.object_family = object_family
-        self.strict = strict
         self.entries = {}
 
     def register_class(
@@ -218,4 +217,4 @@ class Registry:
         )
 
     def handle_error(self, message: str) -> None:
-        handle_error(message, strict=self.strict)
+        handle_error(message)

@@ -33,7 +33,6 @@ def resolve_logger_path(
 def resolve_save_dir(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     **kwargs,
 ) -> str | None:
     return resolve_logger_path(
@@ -45,7 +44,6 @@ def resolve_save_dir(
 def resolve_wandb_dir(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     **kwargs,
 ) -> str | None:
     return resolve_logger_path(

@@ -7,11 +7,9 @@ from ...Workflow.Factory.builder import RegistryBuilder
 def build_loss(
     loss_config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     builder = RegistryBuilder(
         registry=LOSS_REGISTRY,
-        strict=strict,
         type_field="loss_type",
     )
 

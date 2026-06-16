@@ -8,7 +8,6 @@ def build_ac_video_jepa_metric_stack(
     loss_config: dict | None = None,
     encoder_shape: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> dict:
     """
     Build the metric-set/loss pair used by AcVideoJepa modules.
@@ -19,13 +18,11 @@ def build_ac_video_jepa_metric_stack(
         config=metric_set_config,
         encoder_shape=encoder_shape,
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     loss = build_loss(
         loss_config=loss_config,
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     return {

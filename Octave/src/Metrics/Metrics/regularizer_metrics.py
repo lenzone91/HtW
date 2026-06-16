@@ -20,7 +20,6 @@ from ...Workflow.Factory.registry import FieldResolution
 def resolve_projector(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     encoder_shape: dict | None = None,
     **kwargs,
 ) -> Projector | None:
@@ -48,7 +47,6 @@ def resolve_projector(
 def resolve_inverse_dynamics_model(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     encoder_shape: dict | None = None,
     **kwargs,
 ) -> InverseDynamicsModel | None:

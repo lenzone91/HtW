@@ -33,6 +33,6 @@ def test_merge_configs_merges_nested_dicts_without_mutating_inputs() -> None:
     assert override == {"a": {"b": 3}}
 
 
-def test_merge_configs_rejects_unknown_keys_in_strict_mode() -> None:
+def test_merge_configs_rejects_unknown_keys() -> None:
     with pytest.raises(KeyError, match="Unknown config key"):
-        merge_configs({"a": 1}, {"b": 2}, strict=True)
+        merge_configs({"a": 1}, {"b": 2})

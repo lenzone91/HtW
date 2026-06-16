@@ -33,7 +33,6 @@ def load_config(path: str | Path) -> dict:
 def merge_configs(
     base_config: dict,
     override_config: dict | None = None,
-    strict: bool = True,
 ) -> dict:
     if not isinstance(base_config, dict):
         raise TypeError(
@@ -50,25 +49,20 @@ def merge_configs(
         )
 
     merged = deepcopy(base_config)
-    merge_into(merged, override_config, strict=strict, key_path="")
+    merge_into(merged, override_config, key_path="")
     return merged
 
 
 def merge_into(
     base_config: dict,
     override_config: dict,
-    strict: bool,
     key_path: str,
 ) -> None:
     for key, override_value in override_config.items():
         current_key_path = str(key) if key_path == "" else f"{key_path}.{key}"
 
         if key not in base_config:
-            if strict:
-                raise KeyError(f"Unknown config key: {current_key_path}.")
-
-            base_config[key] = deepcopy(override_value)
-            continue
+            raise KeyError(f"Unknown config key: {current_key_path}.")
 
         base_value = base_config[key]
 
@@ -76,7 +70,6 @@ def merge_into(
             merge_into(
                 base_config=base_value,
                 override_config=override_value,
-                strict=strict,
                 key_path=current_key_path,
             )
             continue

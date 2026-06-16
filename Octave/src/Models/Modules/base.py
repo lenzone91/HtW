@@ -8,9 +8,8 @@ class BaseLightningModule(pl.LightningModule):
 
     valid_ml_steps = {"train", "val", "test"}
 
-    def __init__(self, strict: bool = True) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.strict = strict
 
     def prepare_log_dict(
         self,

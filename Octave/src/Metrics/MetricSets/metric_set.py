@@ -12,7 +12,6 @@ class MetricSet(nn.Module):
 
     def __init__(
         self,
-        strict: bool = True,
         metrics: dict[str, nn.Module] | None = None,
         **extra_metrics: nn.Module,
     ) -> None:
@@ -25,7 +24,6 @@ class MetricSet(nn.Module):
 
         prepared_metrics.update(extra_metrics)
 
-        self.strict = strict
         self.check_metrics(prepared_metrics)
         self.metrics = nn.ModuleDict(prepared_metrics)
 
@@ -60,8 +58,7 @@ class MetricSet(nn.Module):
                 )
 
     def handle_error(self, message: str) -> None:
-        if self.strict:
-            raise RuntimeError(message)
+        raise RuntimeError(message)
 
 
 class LoggableMetricSet(MetricSet):
@@ -163,13 +160,11 @@ class AcVideoJepaMetricSet(LoggableMetricSet):
 
     def __init__(
         self,
-        strict: bool = True,
         metric_to_input_names: dict[str, tuple[str, ...]] | None = None,
         metrics: dict[str, nn.Module] | None = None,
         **extra_metrics: nn.Module,
     ) -> None:
         super().__init__(
-            strict=strict,
             metrics=metrics,
             **extra_metrics,
         )

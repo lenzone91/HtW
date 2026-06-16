@@ -8,7 +8,6 @@ from .registry import CHECKPOINT_REGISTRY
 def build_checkpoint_callbacks(
     checkpoint_configs: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> list[NamedModelCheckpoint]:
     if checkpoint_configs is None:
         checkpoint_configs = DEFAULT_CHECKPOINT_CONFIGS
@@ -30,7 +29,6 @@ def build_checkpoint_callbacks(
                 checkpoint_name=checkpoint_name,
                 checkpoint_config=checkpoint_config,
                 runtime_context=runtime_context,
-                strict=strict,
             )
         )
 
@@ -41,7 +39,6 @@ def build_checkpoint_callback(
     checkpoint_name: str,
     checkpoint_config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> NamedModelCheckpoint:
     if not isinstance(checkpoint_name, str) or checkpoint_name.strip() == "":
         raise TypeError(
@@ -51,7 +48,6 @@ def build_checkpoint_callback(
 
     builder = RegistryBuilder(
         registry=CHECKPOINT_REGISTRY,
-        strict=strict,
         type_field="checkpoint_type",
     )
 

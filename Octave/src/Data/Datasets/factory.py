@@ -4,10 +4,14 @@ from .registry import DATASET_REGISTRY
 from ...Workflow.Factory.builder import RegistryBuilder
 
 
-def make_dataset_builder(strict: bool = True) -> RegistryBuilder:
+def make_dataset_builder() -> RegistryBuilder:
     return RegistryBuilder(
         registry=DATASET_REGISTRY,
-        strict=strict,
+    )
+
+
+DATASET_BUILDER = RegistryBuilder(
+        registry=DATASET_REGISTRY,
     )
 
 
@@ -15,9 +19,8 @@ def build_dataset_from_config(
     dataset_config: dict,
     dataset_name: str,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
-    builder = make_dataset_builder(strict=strict)
+    builder = make_dataset_builder()
 
     return builder.build_one(
         config=dataset_config,
@@ -29,9 +32,8 @@ def build_dataset_from_config(
 def build_datasets(
     dataset_configs: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> dict:
-    builder = make_dataset_builder(strict=strict)
+    builder = make_dataset_builder()
 
     return builder.build_named(
         configs=dataset_configs or DEFAULT_DATASETS_CONFIG,
@@ -42,12 +44,10 @@ def build_datasets(
 def build_dataset(
     dataset_config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     datasets = build_datasets(
         dataset_configs=dataset_config,
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     if datasets is None:
@@ -65,11 +65,9 @@ def build_dataset(
 def build_two_rooms_dataset(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     return build_dataset_from_config(
         dataset_config=config or DEFAULT_TWO_ROOMS_DATASET_CONFIG,
         dataset_name="two_rooms",
         runtime_context=runtime_context,
-        strict=strict,
     )

@@ -35,8 +35,8 @@ def test_metric_set_dispatches_dict_inputs() -> None:
     assert torch.equal(values["sum_metric"], torch.tensor(3.0))
 
 
-def test_metric_set_rejects_missing_metric_in_strict_mode() -> None:
-    metric_set = MetricSet(identity=IdentityMetric(), strict=True)
+def test_metric_set_rejects_missing_metric() -> None:
+    metric_set = MetricSet(identity=IdentityMetric())
 
     with pytest.raises(RuntimeError, match="not registered"):
         metric_set({"missing": torch.tensor(1.0)})

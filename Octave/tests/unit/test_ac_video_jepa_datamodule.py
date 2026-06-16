@@ -166,19 +166,6 @@ def test_build_ac_video_jepa_datamodule_rejects_unknown_top_level_key() -> None:
         build_ac_video_jepa_datamodule(config=config)
 
 
-def test_build_ac_video_jepa_datamodule_passes_strict_to_nested_factories() -> None:
-    config = make_tiny_datamodule_config()
-    config["collators"]["train"]["ac_video_jepa"] = {
-        **config["collators"]["train"]["ac_video_jepa"],
-        "unknown": "bad",
-    }
-
-    with pytest.warns(UserWarning, match="Invalid config keys"):
-        datamodule = build_ac_video_jepa_datamodule(config=config, strict=False)
-
-    assert datamodule is None
-
-
 def test_build_ac_video_jepa_datamodule_rejects_unknown_phase() -> None:
     config = make_tiny_datamodule_config()
     config["datasets"]["predict"] = None
@@ -217,3 +204,24 @@ def test_build_ac_video_jepa_datamodule_rejects_cuda_dataset_with_workers(
 
     with pytest.raises(ValueError, match="CUDA dataset sampling with num_workers > 0"):
         build_ac_video_jepa_datamodule(config=config)
+
+
+def test_build_ac_video_jepa_datamodule_rejects_enabled_dataset_without_collator() -> None:
+    config = make_tiny_datamodule_config()
+    config["collators"]["train"] = None
+
+    with pytest.raises(ValueError):
+        build_ac_video_jepa_datamodule(config=config)
+
+
+def test_build_ac_video_jepa_datamodule_rejects_enabled_dataset_without_dataloader_config() -> None:
+    config = make_tiny_datamodule_config()
+    config["dataloader_configs"]["train"] = None
+
+    with pytest.raises(TypeError):
+        build_ac_video_jepa_datamodule(config=config)
+
+
+
+
+

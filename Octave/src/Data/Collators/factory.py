@@ -11,11 +11,9 @@ def build_collator_from_config(
     collator_config: dict,
     collator_name: str,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     builder = RegistryBuilder(
         registry=COLLATOR_REGISTRY,
-        strict=strict,
     )
 
     return builder.build_one(
@@ -28,11 +26,9 @@ def build_collator_from_config(
 def build_collators(
     collator_configs: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> dict:
     builder = RegistryBuilder(
         registry=COLLATOR_REGISTRY,
-        strict=strict,
     )
 
     return builder.build_named(
@@ -45,7 +41,6 @@ def build_collator(
     collator_config: dict | None = None,
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     if collator_config is None:
         collator_config = config
@@ -60,7 +55,6 @@ def build_collator(
     collators = build_collators(
         collator_configs=collator_config,
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     if collators is None:
@@ -85,11 +79,9 @@ def is_single_collator_config(config: dict) -> bool:
 def build_ac_video_jepa_collator(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     return build_collator_from_config(
         collator_config=config or DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
         collator_name="ac_video_jepa",
         runtime_context=runtime_context,
-        strict=strict,
     )

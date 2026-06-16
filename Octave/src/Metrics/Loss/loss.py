@@ -19,13 +19,11 @@ class WeightedMetricLoss(nn.Module):
     def __init__(
         self,
         metric_weights: dict[str, float | None],
-        strict: bool = True,
         name: str = "loss",
         return_loss_terms: bool = True,
     ) -> None:
         super().__init__()
         self.metric_weights = self.filter_metric_weights(metric_weights)
-        self.strict = strict
         self.name = name
         self.return_loss_terms = return_loss_terms
         self.check_metric_weights()
@@ -123,5 +121,4 @@ class WeightedMetricLoss(nn.Module):
             )
 
     def handle_error(self, message: str) -> None:
-        if self.strict:
-            raise RuntimeError(message)
+        raise RuntimeError(message)

@@ -74,7 +74,6 @@ def test_setup_wandb_registration_can_login(monkeypatch) -> None:
             "mode": "offline",
             "login": True,
             "api_key_env_var": "WANDB_API_KEY",
-            "strict": True,
         }
     )
 

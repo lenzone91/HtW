@@ -17,7 +17,6 @@ WALL_DATASET_CONFIG_FIELDS = tuple(
 def resolve_wall_dataset_config(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     **kwargs,
 ) -> WallDatasetConfig:
     config_kwargs = {

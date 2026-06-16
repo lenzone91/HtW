@@ -245,13 +245,3 @@ def test_build_latent_rollout_rejects_unsupported_rollout_type() -> None:
 
     with pytest.raises(RuntimeError, match="Unknown rollout"):
         build_latent_rollout(config=config)
-
-
-def test_build_latent_rollout_returns_none_in_non_strict_mode_for_unknown_type() -> None:
-    config = deepcopy(DEFAULT_LATENT_ROLLOUT_CONFIG)
-    config["rollout_type"] = "unsupported"
-
-    with pytest.warns(UserWarning, match="Unknown rollout"):
-        rollout = build_latent_rollout(config=config, strict=False)
-
-    assert rollout is None

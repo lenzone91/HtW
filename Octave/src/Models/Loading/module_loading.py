@@ -37,7 +37,6 @@ def load_module_from_lightning_checkpoint(
 def resolve_checkpoint_path(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     **kwargs,
 ) -> str:
     checkpoint_path = config.get("checkpoint_path")

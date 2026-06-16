@@ -35,14 +35,9 @@ def make_toy_registry() -> Registry:
     return registry
 
 
-def test_handle_error_raises_in_strict_mode() -> None:
+def test_handle_error_raises() -> None:
     with pytest.raises(RuntimeError, match="bad"):
-        handle_error("bad", strict=True)
-
-
-def test_handle_error_warns_in_non_strict_mode() -> None:
-    with pytest.warns(UserWarning, match="bad"):
-        handle_error("bad", strict=False)
+        handle_error("bad")
 
 
 def test_registry_registers_class_with_decorator() -> None:
@@ -138,18 +133,8 @@ def test_builder_can_skip_default_key_validation() -> None:
     assert obj.kwargs["unknown"] == 4
 
 
-def test_builder_warns_and_returns_none_in_non_strict_mode() -> None:
-    registry = make_toy_registry()
-    builder = RegistryBuilder(registry=registry, strict=False)
-
-    with pytest.warns(UserWarning, match="Unknown toy"):
-        obj = builder.build_one(config={}, name="missing")
-
-    assert obj is None
-
-
 def test_builder_resolves_field_before_construction() -> None:
-    def resolve_value(config, runtime_context=None, strict=True):
+    def resolve_value(config, runtime_context=None):
         return config["raw"] + runtime_context["offset"]
 
     registry = Registry(object_family="toy")
@@ -248,7 +233,6 @@ def test_builder_can_limit_forwarded_kwargs_for_sub_builds() -> None:
     def resolve_value(
         config,
         runtime_context=None,
-        strict=True,
         parent_only: int | None = None,
     ):
         return config["value"] + parent_only
@@ -294,36 +278,6 @@ def test_builder_can_limit_forwarded_kwargs_for_sub_builds() -> None:
     assert isinstance(obj.child, StrictToyObject)
     assert obj.child.value == 7
     assert "ignored_context" not in obj.kwargs
-
-
-def test_builder_propagates_strict_mode_to_sub_builders() -> None:
-    child_registry = make_toy_registry()
-    child_builder = RegistryBuilder(registry=child_registry, strict=True)
-    parent_registry = Registry(object_family="parent")
-    parent_registry.add_entry(
-        name="parent",
-        object_cls=ToyObject,
-        default_config={"child_config": {}},
-        sub_builds=(
-            SubBuildDeclaration(
-                source_key="child_config",
-                target_key="child",
-                builder=child_builder,
-                build_method="one",
-                type_name="toy",
-            ),
-        ),
-    )
-    parent_builder = RegistryBuilder(registry=parent_registry, strict=False)
-
-    with pytest.warns(UserWarning, match="Invalid config keys"):
-        obj = parent_builder.build_one(
-            config={"child_config": {"value": 1, "unknown": "bad"}},
-            name="parent",
-        )
-
-    assert obj is None
-    assert child_builder.strict is True
 
 
 def test_builder_resolves_phase_single_named_sub_build() -> None:

@@ -38,8 +38,8 @@ def test_weighted_metric_loss_sums_weighted_metric_values() -> None:
     assert torch.isclose(loss_logs["loss/metric_to_maximize"], torch.tensor(-12.0))
 
 
-def test_weighted_metric_loss_rejects_missing_metric_in_strict_mode() -> None:
-    loss_object = WeightedMetricLoss(metric_weights={"missing": 1.0}, strict=True)
+def test_weighted_metric_loss_rejects_missing_metric() -> None:
+    loss_object = WeightedMetricLoss(metric_weights={"missing": 1.0})
 
     with pytest.raises(RuntimeError, match="required by the loss"):
         loss_object({"available": torch.tensor(1.0)})

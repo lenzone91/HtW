@@ -15,23 +15,19 @@ from .registry import MODULE_REGISTRY
 def build_ac_video_jepa_module(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> AcVideoJepaModule:
     module_config = prepare_ac_video_jepa_module_config(
         config=config or DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG,
-        strict=strict,
     )
 
     components = build_ac_video_jepa_components(
         config=module_config["components_config"],
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     rollout = build_latent_rollout(
         config=module_config["rollout_config"],
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     metric_stack = build_ac_video_jepa_metric_stack(
@@ -39,17 +35,14 @@ def build_ac_video_jepa_module(
         loss_config=module_config["loss_config"],
         encoder_shape=components["encoder_shape"],
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     optimizer_builder = build_optimizer_builder(
         optimizer_config=module_config["optimizer_config"],
-        strict=strict,
     )
 
     scheduler_builder = build_scheduler_builder(
         scheduler_config=module_config["scheduler_config"],
-        strict=strict,
     )
 
     constructor_config = {
@@ -63,12 +56,10 @@ def build_ac_video_jepa_module(
         "loss": metric_stack["loss"],
         "optimizer_builder": optimizer_builder,
         "scheduler_builder": scheduler_builder,
-        "strict": module_config["strict"],
     }
 
     builder = RegistryBuilder(
         registry=MODULE_REGISTRY,
-        strict=strict,
         type_field="module_type",
     )
 
@@ -80,7 +71,6 @@ def build_ac_video_jepa_module(
 
 def prepare_ac_video_jepa_module_config(
     config: dict,
-    strict: bool = True,
 ) -> dict:
     if not isinstance(config, dict):
         raise TypeError(

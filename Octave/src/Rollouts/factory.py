@@ -5,10 +5,9 @@ from .registry import ROLLOUT_REGISTRY
 from ..Workflow.Factory.builder import RegistryBuilder
 
 
-def make_rollout_builder(strict: bool = True) -> RegistryBuilder:
+def make_rollout_builder() -> RegistryBuilder:
     return RegistryBuilder(
         registry=ROLLOUT_REGISTRY,
-        strict=strict,
         type_field="rollout_type",
     )
 
@@ -16,9 +15,8 @@ def make_rollout_builder(strict: bool = True) -> RegistryBuilder:
 def build_rollout(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
-    builder = make_rollout_builder(strict=strict)
+    builder = make_rollout_builder()
     return builder.build_one(
         config=config or DEFAULT_LATENT_ROLLOUT_CONFIG,
         runtime_context=runtime_context,
@@ -28,10 +26,8 @@ def build_rollout(
 def build_latent_rollout(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> LatentRollout:
     return build_rollout(
         config=config or DEFAULT_LATENT_ROLLOUT_CONFIG,
         runtime_context=runtime_context,
-        strict=strict,
     )

@@ -7,11 +7,9 @@ from ....Workflow.Factory.builder import RegistryBuilder
 def build_ac_video_jepa_components(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> dict:
     builder = RegistryBuilder(
         registry=AC_VIDEO_JEPA_COMPONENTS_REGISTRY,
-        strict=strict,
         type_field="model_type",
     )
 

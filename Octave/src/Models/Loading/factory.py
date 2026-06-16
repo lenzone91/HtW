@@ -26,14 +26,12 @@ class DisabledModuleLoader:
 def build_module_loader(
     loading_config: dict | None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> LightningModuleLoader | DisabledModuleLoader:
     if not is_loading_enabled(loading_config):
         return DisabledModuleLoader()
 
     builder = RegistryBuilder(
         registry=LOADING_REGISTRY,
-        strict=strict,
         type_field="type",
     )
 
@@ -47,12 +45,10 @@ def load_module_if_needed(
     module: LightningModule,
     loading_config: dict | None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> LightningModule:
     loader = build_module_loader(
         loading_config=loading_config,
         runtime_context=runtime_context,
-        strict=strict,
     )
 
     return loader(module)
@@ -73,10 +69,8 @@ def is_loading_enabled(loading_config: dict | None) -> bool:
 
 def build_default_module_loader(
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> LightningModuleLoader | DisabledModuleLoader:
     return build_module_loader(
         loading_config=DEFAULT_MODULE_LOADING_CONFIG,
         runtime_context=runtime_context,
-        strict=strict,
     )

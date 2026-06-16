@@ -13,13 +13,11 @@ VALID_PHASES = ("train", "val", "test")
 def build_ac_video_jepa_datamodule(
     config: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> AcVideoJepaDataModule:
     return build_datamodule_from_config(
         datamodule_config=config or DEFAULT_AC_VIDEO_JEPA_DATAMODULE_CONFIG,
         datamodule_name="ac_video_jepa",
         runtime_context=runtime_context,
-        strict=strict,
     )
 
 
@@ -27,13 +25,11 @@ def build_datamodule_from_config(
     datamodule_config: dict,
     datamodule_name: str,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ) -> AcVideoJepaDataModule:
     check_datamodule_runtime_semantics(datamodule_config)
 
     builder = RegistryBuilder(
         registry=DATAMODULE_REGISTRY,
-        strict=strict,
     )
 
     return builder.build_one(

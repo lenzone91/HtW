@@ -17,7 +17,6 @@ from ..Workflow.Factory.builder import RegistryBuilder
 def build_loggers(
     logger_configs: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     logger_configs = logger_configs or DEFAULT_LOGGER_CONFIGS
 
@@ -40,7 +39,6 @@ def build_loggers(
                 logger_name=logger_name,
                 logger_config=logger_config,
                 runtime_context=runtime_context,
-                strict=strict,
             )
         )
 
@@ -56,11 +54,9 @@ def build_logger(
     logger_name: str,
     logger_config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     builder = RegistryBuilder(
         registry=LOGGER_REGISTRY,
-        strict=strict,
         type_field="logger_type",
     )
 

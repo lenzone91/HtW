@@ -15,7 +15,6 @@ def setup_runtime(
     resolved_setup_config = merge_configs(
         base_config=DEFAULT_SETUP_CONFIG,
         override_config=setup_config or {},
-        strict=False,
     )
 
     runtime_context = {}

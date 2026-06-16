@@ -1,11 +1,5 @@
-import warnings
-
-
-def handle_error(message: str, strict: bool = True) -> None:
+def handle_error(message: str) -> None:
     """
-    Raise in strict mode, warn otherwise.
+    Raise error.
     """
-    if strict:
-        raise RuntimeError(message)
-
-    warnings.warn(message, stacklevel=2)
+    raise RuntimeError(message)

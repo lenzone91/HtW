@@ -13,7 +13,6 @@ from ...Workflow.Factory.registry import FieldResolution
 def resolve_checkpoint_dirpath(
     config: dict,
     runtime_context: dict | None = None,
-    strict: bool = True,
     **kwargs,
 ) -> str | None:
     dirpath = config.get("dirpath")

@@ -9,11 +9,9 @@ from .registry import SCHEDULER_REGISTRY
 def build_scheduler(
     optimizer: torch.optim.Optimizer,
     scheduler_config: dict | None,
-    strict: bool = True,
 ) -> dict | None:
     scheduler_builder = build_scheduler_builder(
         scheduler_config=scheduler_config,
-        strict=strict,
     )
 
     return scheduler_builder(optimizer)
@@ -21,14 +19,12 @@ def build_scheduler(
 
 def build_scheduler_builder(
     scheduler_config: dict | None,
-    strict: bool = True,
 ) -> ConfiguredSchedulerBuilder | DisabledSchedulerBuilder:
     if not is_scheduler_enabled(scheduler_config):
         return DisabledSchedulerBuilder()
 
     builder = RegistryBuilder(
         registry=SCHEDULER_REGISTRY,
-        strict=strict,
         type_field="scheduler_type",
     )
 

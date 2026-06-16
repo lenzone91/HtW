@@ -16,7 +16,6 @@ DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG = {
     "loss_config": deepcopy(DEFAULT_WEIGHTED_METRIC_LOSS_CONFIG),
     "optimizer_config": deepcopy(DEFAULT_ADAMW_CONFIG),
     "scheduler_config": deepcopy(DEFAULT_SCHEDULER_CONFIG),
-    "strict": True,
 }
 
 
@@ -31,5 +30,4 @@ DEFAULT_AC_VIDEO_JEPA_MODULE_CONSTRUCTOR_CONFIG = {
     "loss": None,
     "optimizer_builder": None,
     "scheduler_builder": None,
-    "strict": True,
 }

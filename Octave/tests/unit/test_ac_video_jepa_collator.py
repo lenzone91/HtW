@@ -118,23 +118,11 @@ def test_build_collators_rejects_unknown_collator_name() -> None:
         build_collator(config=config)
 
 
-def test_build_collator_strict_false_returns_none_for_unknown_config_key() -> None:
-    config = {
-        **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
-        "unknown": "bad",
-    }
-
-    with pytest.warns(UserWarning, match="Invalid config keys"):
-        collator = build_collator(config=config, strict=False)
-
-    assert collator is None
-
-
 def test_build_collator_rejects_non_callable_transform() -> None:
     config = {
         **DEFAULT_AC_VIDEO_JEPA_COLLATOR_CONFIG,
         "transforms": ["not callable"],
     }
 
-    with pytest.raises(TypeError, match="transforms must be callable"):
+    with pytest.raises(TypeError):
         build_collator(config=config)

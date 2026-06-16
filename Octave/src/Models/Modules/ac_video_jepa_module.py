@@ -34,9 +34,8 @@ class AcVideoJepaModule(BaseLightningModule):
         loss: WeightedMetricLoss,
         optimizer_builder: Callable,
         scheduler_builder: Callable,
-        strict: bool = True,
     ) -> None:
-        super().__init__(strict=strict)
+        super().__init__()
 
         self.encoder = encoder
         self.action_encoder = action_encoder

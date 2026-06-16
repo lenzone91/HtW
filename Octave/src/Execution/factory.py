@@ -107,7 +107,6 @@ def build_trainer(
 
     builder = RegistryBuilder(
         registry=TRAINER_REGISTRY,
-        strict=True,
         type_field="trainer_type",
     )
 

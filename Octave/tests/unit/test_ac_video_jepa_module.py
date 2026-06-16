@@ -229,7 +229,6 @@ def test_ac_video_jepa_module_configure_optimizers_returns_scheduler_dict() -> N
         "interval": "epoch",
         "frequency": 1,
         "monitor": None,
-        "strict": True,
         "name": None,
     })
 

@@ -8,11 +8,9 @@ def build_metric_set(
     metric_set_config: dict | None = None,
     encoder_shape: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     builder = RegistryBuilder(
         registry=METRIC_SET_REGISTRY,
-        strict=strict,
         type_field="set_type",
     )
 
@@ -27,11 +25,9 @@ def build_ac_video_jepa_metric_set(
     config: dict | None = None,
     encoder_shape: dict | None = None,
     runtime_context: dict | None = None,
-    strict: bool = True,
 ):
     return build_metric_set(
         metric_set_config=config or DEFAULT_AC_VIDEO_JEPA_METRIC_SET_CONFIG,
         encoder_shape=encoder_shape,
         runtime_context=runtime_context,
-        strict=strict,
     )

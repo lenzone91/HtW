@@ -80,7 +80,6 @@ def test_load_module_if_needed_loads_enabled_module(tmp_path: Path) -> None:
             "enabled": True,
             "type": "lightning_module",
             "checkpoint_path": "checkpoints/module.ckpt",
-            "strict": True,
             "map_location": "cpu",
             "state_dict_key": "state_dict",
             "relative_to": "run_dir",

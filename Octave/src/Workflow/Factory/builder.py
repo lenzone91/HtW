@@ -12,12 +12,10 @@ class RegistryBuilder:
     def __init__(
         self,
         registry: Registry,
-        strict: bool = True,
         check_default_keys: bool = True,
         type_field: str | None = None,
     ) -> None:
         self.registry = registry
-        self.strict = strict
         self.check_default_keys = check_default_keys
         self.type_field = type_field
         self.check_registry()
@@ -194,7 +192,6 @@ class RegistryBuilder:
             value = field_resolution.resolver(
                 config=config,
                 runtime_context=runtime_context,
-                strict=self.strict,
                 *args,
                 **kwargs,
             )
@@ -337,7 +334,6 @@ class RegistryBuilder:
 
         return RegistryBuilder(
             registry=builder.registry,
-            strict=self.strict,
             check_default_keys=builder.check_default_keys,
             type_field=builder.type_field,
         )
@@ -448,7 +444,7 @@ class RegistryBuilder:
         return deepcopy(config)
 
     def handle_error(self, message: str) -> None:
-        handle_error(message, strict=self.strict)
+        handle_error(message)
 
     def handle_unknown_name(self, name: str) -> None:
         self.handle_error(
