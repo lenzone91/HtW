@@ -1,0 +1,27 @@
+# AcVideoJEPA run config (entrypoint).
+#
+# Hydra composes the groups below into a single config, which Workflow/Configs
+# resolves to a plain dict. The resulting sections:
+#   setup       -> Workflow/Setup.build_runtime_context
+#   datamodule  -> AIML build_datamodule (DefaultDataModule)
+#   module      -> AIML build_lightning_module (AcVideoJepaModule)
+#   trainer     -> AIML Execution Trainer kwargs
+#
+# Hydra is used for composition only; it does not instantiate objects.
+
+defaults:
+  - setup: default
+  - datamodule: two_rooms_toy
+  - module: ac_video_jepa
+  - trainer: toy
+  - loggers: none
+  - _self_
+
+# Run orchestration (read by AIML/Execution/launch). `mode` is the default when
+# no --mode CLI flag is given; `imports` are the modules launch imports to
+# register the experiment's concretes; `checkpoint_path` feeds resume/validate.
+run:
+  mode: train
+  imports:
+    - src.AcVideoJEPA
+  checkpoint_path: null

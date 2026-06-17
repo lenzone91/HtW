@@ -7,11 +7,11 @@ error surface (RegistryError on every contract violation).
 
 import pytest
 
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     FactoryError,
     RegistryError,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     FieldResolution,
     Registry,
     RegistryEntry,

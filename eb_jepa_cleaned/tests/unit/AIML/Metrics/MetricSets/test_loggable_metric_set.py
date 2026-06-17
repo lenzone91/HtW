@@ -7,7 +7,7 @@ Covers log-dict flattening of scalar, dict, sequence, and vector tensor outputs.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.loggable_metric_set import (
+from src.AIML.Metrics.MetricSets.loggable_metric_set import (
     LoggableMetricSet,
 )
 

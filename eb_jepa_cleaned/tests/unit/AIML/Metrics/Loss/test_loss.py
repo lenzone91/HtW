@@ -5,10 +5,10 @@ Unit tests for AIML.Metrics.Loss (WeightedMetricLoss + factory).
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Metrics.Loss.factory import (
+from src.AIML.Metrics.Loss.factory import (
     build_loss,
 )
-from eb_jepa_cleaned.AIML.Metrics.Loss.loss import (
+from src.AIML.Metrics.Loss.loss import (
     WeightedMetricLoss,
 )
 

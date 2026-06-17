@@ -1,0 +1,23 @@
+# @package setup
+device: auto
+reproducibility:
+  seed: 42
+  deterministic: false
+  cudnn_benchmark: false
+paths:
+  project_root: null
+  run_root: runs
+  experiment_name: ac_video_jepa
+  run_name: default_run
+  existing_run_dir_policy: fail
+user_credential:
+  enabled: false      # set true to load secrets from the file below into env
+  path: user_credential.yaml   # gitignored; e.g. {wandb: {api_key: ...}}
+  environment_variables:
+    WANDB_API_KEY: [wandb, api_key]
+wandb:
+  enabled: false      # set true (with mode/login) for a real online run
+  mode: online        # online | offline | disabled
+  login: false        # reads WANDB_API_KEY (exported by user_credential above)
+  api_key_env_var: WANDB_API_KEY
+

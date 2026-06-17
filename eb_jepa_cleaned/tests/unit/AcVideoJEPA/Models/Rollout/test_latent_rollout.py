@@ -8,10 +8,10 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.rnn_predictor import RNNPredictor
-from eb_jepa_cleaned.AcVideoJEPA.Models.Rollout.factory import build_rollout
-from eb_jepa_cleaned.AcVideoJEPA.Models.Rollout.latent_rollout import LatentRollout
-from eb_jepa_cleaned.AcVideoJEPA.Models.Rollout.output import LatentRolloutOutput
+from src.AcVideoJEPA.Models.Backbones.rnn_predictor import RNNPredictor
+from src.AcVideoJEPA.Models.Rollout.factory import build_rollout
+from src.AcVideoJEPA.Models.Rollout.latent_rollout import LatentRollout
+from src.AcVideoJEPA.Models.Rollout.output import LatentRolloutOutput
 
 
 class FixedEncoderJepa:

@@ -5,7 +5,7 @@ Unit tests for AIML.Metrics.Metrics.base.BaseMetric.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Metrics.Metrics.base import (
+from src.AIML.Metrics.Metrics.base import (
     BaseMetric,
 )
 

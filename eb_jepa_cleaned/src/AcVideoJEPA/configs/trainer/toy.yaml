@@ -1,0 +1,10 @@
+# @package trainer
+# Toy trainer: one optimizer step. num_sanity_val_steps=0 and max_steps=1 mean a
+# training run stops before any end-of-epoch validation; trainer.validate (the
+# validation run) still runs the full val loop.
+max_steps: 1
+num_sanity_val_steps: 0
+accelerator: cpu
+enable_checkpointing: false
+enable_progress_bar: false
+enable_model_summary: false

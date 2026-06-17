@@ -13,18 +13,18 @@ with a real on-disk Hydra config tree.
 
 import pytest
 
-from eb_jepa_cleaned.Workflow.Configs.compose import (
+from src.Workflow.Configs.compose import (
     compose_config,
     load_resolved_config,
 )
-from eb_jepa_cleaned.Workflow.Configs.resolve import (
+from src.Workflow.Configs.resolve import (
     check_plain_config,
     resolve_to_plain_dict,
 )
-from eb_jepa_cleaned.Workflow.Factory.builder import (
+from src.Workflow.Factory.builder import (
     RegistryBuilder,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     Registry,
 )
 

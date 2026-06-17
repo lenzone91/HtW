@@ -15,29 +15,29 @@ import pytest
 import torch
 from torch.utils.data import Dataset
 
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.registry import (
+from src.AIML.Data.Collators.registry import (
     COLLATOR_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.base import (
+from src.AIML.Data.Datasets.base import (
     BaseDataset,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.registry import (
+from src.AIML.Data.Datasets.registry import (
     DATASET_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.DataAugmentation.base import (
+from src.AIML.Data.DataAugmentation.base import (
     BaseAugmentation,
 )
-from eb_jepa_cleaned.AIML.Data.DataAugmentation.registry import (
+from src.AIML.Data.DataAugmentation.registry import (
     AUGMENTATION_BUILDER,
     AUGMENTATION_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.DataModules.factory import (
+from src.AIML.Data.DataModules.factory import (
     build_datamodule,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     SubBuildDeclaration,
 )
 

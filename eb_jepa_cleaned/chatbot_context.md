@@ -44,8 +44,9 @@ Current migration objectives:
 
 ## Target Source Layout
 
-    eb_jepa_cleaned/            (project root: pyproject.toml, tests/)
-      eb_jepa_cleaned/          (the importable package)
+    eb_jepa_cleaned/            (project root: README, pyproject.toml, tests/)
+      Configs/                  user run configs (one .yaml = one run)
+      src/                      the importable package (`import src...`)
         Workflow/
         AIML/
         AcVideoJEPA/
@@ -199,13 +200,20 @@ Avoid duplicating the same text across README files.
 
 ## Current Migration Phase
 
-Phase A (standalone env/scaffold) + Phases 0-2 done. AcVideoJEPA (the concrete
-experiment, incl. the JEPA objective) is next. Full suite: 173 passed on
-`.venv_cleaned_jepa`.
+Phase A (standalone env/scaffold) + Phases 0-2 done. AcVideoJEPA is fully built
+and runs config-driven end-to-end (Backbones, Rollout, Metrics, Module, Data;
+`Workflow/Setup` runtime_context; Hydra config tree; train/resume/validate run
+modes + `launch` CLI; wandb logging incl. credential-file loading). Source now
+lives in `src/` (import root `src.*`); user run configs live in project-root
+`Configs/` (one .yaml = one run, reusing framework groups via a `pkg://` search
+path; existing-results -> `ask`). Project README is an install/usage tutorial;
+the architecture doc moved to `src/README.md`. Full suite: 246 passed on
+`.venv_cleaned_jepa`. Remaining is optional polish (planning/evaluation
+trajectories, Execution reports).
 
 Done:
 
-- Phase 0: scaffold (`eb_jepa_cleaned/` package with pillars
+- Phase 0: scaffold (`src/` package with pillars
   `Workflow`/`AIML`/`AcVideoJEPA`, `tests/{unit,integration,smoke}`).
 - Phase 1 Workflow:
   - `Workflow/Factory` — strict `Registry` + `RegistryBuilder`, semantic error
@@ -245,16 +253,58 @@ Done so far (suite 201 passing):
   field resolvers read `runtime_context["encoder_shape"]`. Uniform metric
   signature `forward(rollout_output, actions=None)`.
 
-Still to do:
 - `Models/Modules/` — registered `AcVideoJepaModule` (subclass of
   `BaseLightningModule`): holds encoder/predictor/action-encoder in `models`,
-  exposes `encode`/`encode_actions`/`predict` for the rollout, builds
-  metric_set + loss via field resolutions, probes encoder shape into
-  `runtime_context`, and runs the step `rollout -> metric set -> weighted loss`.
-- Data — vendor `two_rooms` (WallDataset + env), collator, datamodule.
-- `Workflow/Setup` — un-defer runtime_context/paths/reproducibility/launch
-  (Decision 22); AcVideoJEPA only consumes the resulting runtime_context.
-- Hydra config tree + end-to-end smoke test.
+  exposes `encode`/`encode_actions`/`predict` (+ a `predictor` property the
+  rollout reads). Built through the generic `build_lightning_module` via an
+  ordered field-resolution chain (`resolve_models` builds encoder → probes
+  `encoder_shape` → builds predictor coupled to the encoder → identity action
+  encoder; `resolve_metric_set` injects `encoder_shape` into `runtime_context`;
+  `resolve_rollout`/`resolve_loss`). `configure_optimizers` builds ONE optimizer
+  over `self.parameters()` (the per-model base default would miss the metric
+  set's inverse-dynamics / projector params). One-step `trainer.fit` green.
+
+- `Data/` — vendored `two_rooms` (WallDataset + env, verbatim copy, Decision 30;
+  deps in the `acvideo` extra), the `TwoRoomsDataset` adapter (registered
+  `two_rooms`, semantic `{states, actions, locations, wall_x, door_y, metadata}`
+  samples), and `AcVideoJepaCollator` (registered `ac_video_jepa`). DataLoader
+  assembly uses AIML's generic `DefaultDataModule` (no experiment datamodule).
+- End-to-end smoke test (`tests/smoke/`): a full plain-dict run config built via
+  `build_training_objects` runs one `trainer.fit` step on real (tiny) two-rooms
+  data. GREEN. The whole architecture is validated end-to-end (suite: 211).
+
+- `Workflow/Setup` — `build_runtime_context(setup_config)` -> `{device,
+  reproducibility, paths}` (Decision 22, now done). Separate channel from config.
+- `AcVideoJEPA/configs/` — Hydra config tree (config + setup/datamodule/module/
+  trainer groups, `# @package <group>` headers). Config-driven run flow:
+  `load_resolved_config` -> `build_runtime_context(config["setup"])` ->
+  `build_training_objects(config, runtime_context)` -> `trainer.fit`. Validated
+  in `tests/integration/AcVideoJEPA/`.
+- Importing `src.AcVideoJEPA` registers the whole experiment.
+- `AIML/Execution` run orchestration: `train.py`/`resume.py`/`validate.py`
+  (`run_training`/`run_resume_training`/`run_validation`), `snapshots.py`, and
+  `launch.py` — the entrypoint that composes config (Configs) -> builds
+  runtime_context (Setup) -> dispatches by `--mode` or `config['run']['mode']`.
+  CLI: `python -m src.AIML.Execution.launch <config_dir> --mode train
+  --overwrite [key=value ...]`. Generic: registers the experiment via
+  `config['run']['imports']` (dynamic import, no static AIML->experiment dep).
+
+- wandb wired: `WandbLogger` (registered) with `save_dir` resolved to the run's
+  logs dir (field resolution reading runtime_context); `Workflow/Setup.setup_wandb`
+  (WANDB_MODE + optional login); Hydra `loggers` group (`none`/`csv`/`wandb`,
+  default `none`; enable with `loggers=wandb`); run flows finalize wandb via
+  `close_external_services` in a `finally`.
+- credentials: `Workflow/Setup.setup_user_credential` loads a gitignored
+  `user_credential.yaml` (`{wandb: {api_key: ...}}`) and exports
+  `WANDB_API_KEY` (config: `setup.user_credential`), run before wandb so login
+  reads it. Secrets never enter the runtime_context. wandb key is once-per-machine
+  (cached in ~/.netrc), not per run.
+
+Optional polish remaining: planning/evaluation trajectories (eval side of
+ac_video_jepa); Execution reports.
+
+Test entrypoint: `.venv_cleaned_jepa/Scripts/python.exe -m pytest -q` (install
+`-e ".[acvideo,dev]"`).
 
 Important builder note: the builder does NOT merge `default_config` (it is the
 allow-list); full configs come from Hydra (or `get_default_config` in tests).
@@ -271,15 +321,16 @@ A prior, less-modular migration of `ac_video_jepa` exists as a reference
 - Dedicated venv: `.venv_cleaned_jepa` (Python 3.12). Interpreter at
   `.venv_cleaned_jepa/Scripts/python.exe`. Install: `pip install -e ".[dev]"`
   (add the `acvideo` extra at Phase 4 for the vendored two-rooms deps).
-- Import root: a single top-level package `eb_jepa_cleaned` with the pillars as
-  subpackages — `from eb_jepa_cleaned.Workflow...`, `from eb_jepa_cleaned.AIML...`,
-  etc. (project/package layout, `where=["."]` + `include=["eb_jepa_cleaned*"]`;
-  Decision 31). Internal code uses relative imports. Test dirs are packages
-  (`__init__.py` throughout `tests/`) to avoid duplicate-basename clashes.
+- Import root: the source lives in `src/`, which IS the top-level import package
+  `src` (pillars are its subpackages) — `from src.Workflow...`, `from src.AIML...`,
+  `from src.AcVideoJEPA...` (`where=["."]` + `include=["src*"]`; Decision 31).
+  Internal code uses relative imports. Test dirs are packages (`__init__.py`
+  throughout `tests/`) to avoid duplicate-basename clashes.
 - Run tests: `.venv_cleaned_jepa/Scripts/python.exe -m pytest` from the project
   root.
-- Inherited suite (~173 tests, generic Workflow/AIML) is being re-verified in
-  this repo as the Phase A baseline gate.
+- Launch runs: `.venv_cleaned_jepa/Scripts/python.exe -m src.AIML.Execution.launch
+  Configs --config-name <run>` (user run configs live in project-root `Configs/`).
+- Full suite currently green (244+).
 
 ## Conventions
 

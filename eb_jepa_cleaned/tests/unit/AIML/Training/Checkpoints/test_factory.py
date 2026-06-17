@@ -5,10 +5,10 @@ Unit tests for AIML.Training.Checkpoints.factory.
 import pytest
 from lightning.pytorch.callbacks import ModelCheckpoint
 
-from eb_jepa_cleaned.AIML.Training.Checkpoints.factory import (
+from src.AIML.Training.Checkpoints.factory import (
     build_checkpoint_callbacks,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

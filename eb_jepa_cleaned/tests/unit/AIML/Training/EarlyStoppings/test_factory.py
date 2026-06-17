@@ -5,10 +5,10 @@ Unit tests for AIML.Training.EarlyStoppings.factory.
 import pytest
 from lightning.pytorch.callbacks import EarlyStopping
 
-from eb_jepa_cleaned.AIML.Training.EarlyStoppings.factory import (
+from src.AIML.Training.EarlyStoppings.factory import (
     build_early_stopping_callbacks,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

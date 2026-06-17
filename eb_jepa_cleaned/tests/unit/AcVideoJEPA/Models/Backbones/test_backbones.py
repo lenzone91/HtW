@@ -6,15 +6,15 @@ registry. Small dims keep the encoder probe fast.
 import torch
 
 # Importing the subpackage registers the backbone models onto MODEL_REGISTRY.
-import eb_jepa_cleaned.AcVideoJEPA.Models.Backbones  # noqa: F401
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.impala_encoder import ImpalaEncoder
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
+import src.AcVideoJEPA.Models.Backbones  # noqa: F401
+from src.AcVideoJEPA.Models.Backbones.impala_encoder import ImpalaEncoder
+from src.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
     InverseDynamicsModel,
 )
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.projector import Projector
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.rnn_predictor import RNNPredictor
-from eb_jepa_cleaned.AIML.Models.Models.factory import build_model
-from eb_jepa_cleaned.AIML.Models.Models.registry import MODEL_REGISTRY
+from src.AcVideoJEPA.Models.Backbones.projector import Projector
+from src.AcVideoJEPA.Models.Backbones.rnn_predictor import RNNPredictor
+from src.AIML.Models.Models.factory import build_model
+from src.AIML.Models.Models.registry import MODEL_REGISTRY
 
 SMALL_ENCODER = {
     "input_shape": [2, 16, 16],

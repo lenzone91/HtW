@@ -7,7 +7,7 @@ Covers the generic sample convention and shared validation/conversion helpers.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Data.Datasets.base import (
+from src.AIML.Data.Datasets.base import (
     BaseDataset,
 )
 

@@ -8,15 +8,15 @@ import pytest
 import torch
 
 # Importing the subpackage registers the metrics onto METRIC_REGISTRY.
-import eb_jepa_cleaned.AcVideoJEPA.Metrics  # noqa: F401
-from eb_jepa_cleaned.AcVideoJEPA.Metrics.regularizers import HingeStdLossMetric
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
+import src.AcVideoJEPA.Metrics  # noqa: F401
+from src.AcVideoJEPA.Metrics.regularizers import HingeStdLossMetric
+from src.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
     InverseDynamicsModel,
 )
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.projector import Projector
-from eb_jepa_cleaned.AcVideoJEPA.Models.Rollout.output import LatentRolloutOutput
-from eb_jepa_cleaned.AIML.Metrics.Metrics.factory import build_metric
-from eb_jepa_cleaned.AIML.Metrics.Metrics.registry import METRIC_REGISTRY
+from src.AcVideoJEPA.Models.Backbones.projector import Projector
+from src.AcVideoJEPA.Models.Rollout.output import LatentRolloutOutput
+from src.AIML.Metrics.Metrics.factory import build_metric
+from src.AIML.Metrics.Metrics.registry import METRIC_REGISTRY
 
 B, C, T = 2, 4, 4
 ENCODER_SHAPE = {"feature_dim": C, "height": 1, "width": 1}

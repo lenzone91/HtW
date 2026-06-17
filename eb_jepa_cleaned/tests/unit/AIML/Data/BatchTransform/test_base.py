@@ -7,7 +7,7 @@ The shared dict -> dict contract for both DataAugmentation and DataAdaptation.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Data.BatchTransform.base import (
+from src.AIML.Data.BatchTransform.base import (
     BaseBatchTransform,
 )
 

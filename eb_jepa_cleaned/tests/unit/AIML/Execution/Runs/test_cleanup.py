@@ -4,7 +4,7 @@ Unit tests for AIML.Execution.Runs.cleanup.
 
 import sys
 
-from eb_jepa_cleaned.AIML.Execution.Runs.cleanup import (
+from src.AIML.Execution.Runs.cleanup import (
     close_external_services,
 )
 

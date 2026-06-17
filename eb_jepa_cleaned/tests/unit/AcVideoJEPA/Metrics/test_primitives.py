@@ -1,14 +1,14 @@
 import pytest
 import torch
 
-from eb_jepa_cleaned.AcVideoJEPA.Metrics.primitives import (
+from src.AcVideoJEPA.Metrics.primitives import (
     CovarianceLoss,
     HingeStdLoss,
     InverseDynamicsLoss,
     SquareLossSeq,
     TemporalSimilarityLoss,
 )
-from eb_jepa_cleaned.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
+from src.AcVideoJEPA.Models.Backbones.inverse_dynamics import (
     InverseDynamicsModel,
 )
 

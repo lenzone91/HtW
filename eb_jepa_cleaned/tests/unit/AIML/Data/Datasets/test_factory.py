@@ -7,17 +7,17 @@ generic datasets onto the shared registry and clean up afterwards.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.Datasets.base import (
+from src.AIML.Data.Datasets.base import (
     BaseDataset,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.factory import (
+from src.AIML.Data.Datasets.factory import (
     build_dataset,
     build_datasets,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.registry import (
+from src.AIML.Data.Datasets.registry import (
     DATASET_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 
@@ -69,8 +69,8 @@ def test_build_dataset_unknown_name_raises():
 
 def test_build_dataset_uses_shared_builder(registered_dummy):
     # Sanity: the factory does not construct a fresh builder per call.
-    from eb_jepa_cleaned.AIML.Data.Datasets import factory
-    from eb_jepa_cleaned.AIML.Data.Datasets.registry import (
+    from src.AIML.Data.Datasets import factory
+    from src.AIML.Data.Datasets.registry import (
         DATASET_BUILDER,
     )
 

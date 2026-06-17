@@ -7,26 +7,26 @@ collators registered on the shared registries.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.registry import (
+from src.AIML.Data.Collators.registry import (
     COLLATOR_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.base import (
+from src.AIML.Data.Datasets.base import (
     BaseDataset,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.registry import (
+from src.AIML.Data.Datasets.registry import (
     DATASET_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.DataModules.default import (
+from src.AIML.Data.DataModules.default import (
     DEFAULT_DATAMODULE_CONFIG,
     DefaultDataModule,
 )
-from eb_jepa_cleaned.AIML.Data.DataModules.factory import (
+from src.AIML.Data.DataModules.factory import (
     build_datamodule,
 )
-from eb_jepa_cleaned.AIML.Data.DataModules.registry import (
+from src.AIML.Data.DataModules.registry import (
     DATAMODULE_REGISTRY,
     DATAMODULE_SUB_BUILDS,
 )

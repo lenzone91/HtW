@@ -5,11 +5,11 @@ Unit tests for AIML.Training.Optimizers.factory.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Training.Optimizers.factory import (
+from src.AIML.Training.Optimizers.factory import (
     build_optimizers,
     build_optimizers_from_models,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

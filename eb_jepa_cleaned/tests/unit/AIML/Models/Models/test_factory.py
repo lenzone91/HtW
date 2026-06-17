@@ -6,14 +6,14 @@ import pytest
 import torch
 from torch import nn
 
-from eb_jepa_cleaned.AIML.Models.Models.factory import (
+from src.AIML.Models.Models.factory import (
     build_model,
     build_models,
 )
-from eb_jepa_cleaned.AIML.Models.Models.registry import (
+from src.AIML.Models.Models.registry import (
     MODEL_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

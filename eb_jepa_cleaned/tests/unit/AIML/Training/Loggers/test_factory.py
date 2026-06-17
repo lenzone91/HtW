@@ -5,10 +5,10 @@ Unit tests for AIML.Training.Loggers.factory.
 import pytest
 from lightning.pytorch.loggers import CSVLogger as LightningCSVLogger
 
-from eb_jepa_cleaned.AIML.Training.Loggers.factory import (
+from src.AIML.Training.Loggers.factory import (
     build_loggers,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

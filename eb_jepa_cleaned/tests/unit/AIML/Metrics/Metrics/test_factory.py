@@ -5,17 +5,17 @@ Unit tests for AIML.Metrics.Metrics.factory.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Metrics.Metrics.base import (
+from src.AIML.Metrics.Metrics.base import (
     BaseMetric,
 )
-from eb_jepa_cleaned.AIML.Metrics.Metrics.factory import (
+from src.AIML.Metrics.Metrics.factory import (
     build_metric,
     build_metrics,
 )
-from eb_jepa_cleaned.AIML.Metrics.Metrics.registry import (
+from src.AIML.Metrics.Metrics.registry import (
     METRIC_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

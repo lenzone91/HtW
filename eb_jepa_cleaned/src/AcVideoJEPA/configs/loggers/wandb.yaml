@@ -1,0 +1,11 @@
+# @package _global_
+# Weights & Biases logger. Offline by default (no network / login needed); set
+# offline: false and enable setup.wandb (mode: online, login: true) for a real
+# online run. save_dir is resolved to the run's logs directory at build time.
+loggers:
+  wandb:
+    project: ac_video_jepa
+    name: null
+    offline: true
+    save_dir: logs
+    log_model: false

@@ -18,34 +18,34 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.registry import (
+from src.AIML.Data.Collators.registry import (
     COLLATOR_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.base import (
+from src.AIML.Data.Datasets.base import (
     BaseDataset,
 )
-from eb_jepa_cleaned.AIML.Data.Datasets.registry import (
+from src.AIML.Data.Datasets.registry import (
     DATASET_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Execution.Runs.factory import (
+from src.AIML.Execution.Runs.factory import (
     build_training_objects,
 )
-from eb_jepa_cleaned.AIML.Models.Models.factory import (
+from src.AIML.Models.Models.factory import (
     build_model,
 )
-from eb_jepa_cleaned.AIML.Models.Models.registry import (
+from src.AIML.Models.Models.registry import (
     MODEL_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Models.Modules.base import (
+from src.AIML.Models.Modules.base import (
     BaseLightningModule,
 )
-from eb_jepa_cleaned.AIML.Models.Modules.registry import (
+from src.AIML.Models.Modules.registry import (
     LIGHTNING_MODULE_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     FieldResolution,
 )
 
@@ -203,7 +203,7 @@ def _config():
 def test_build_training_objects_types(registered):
     from lightning import Trainer
 
-    from eb_jepa_cleaned.AIML.Data.DataModules.base import (
+    from src.AIML.Data.DataModules.base import (
         BaseDataModule,
     )
 

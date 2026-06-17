@@ -8,10 +8,10 @@ with already-built (dummy) datasets and collators.
 import pytest
 from torch.utils.data import DataLoader, Dataset
 
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
-from eb_jepa_cleaned.AIML.Data.DataModules.base import (
+from src.AIML.Data.DataModules.base import (
     BaseDataModule,
 )
 

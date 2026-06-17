@@ -6,20 +6,20 @@ Registers dummy generic augmentations onto the shared registry and cleans up.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.BatchTransform.base import (
+from src.AIML.Data.BatchTransform.base import (
     BaseBatchTransform,
 )
-from eb_jepa_cleaned.AIML.Data.DataAugmentation.base import (
+from src.AIML.Data.DataAugmentation.base import (
     BaseAugmentation,
 )
-from eb_jepa_cleaned.AIML.Data.DataAugmentation.factory import (
+from src.AIML.Data.DataAugmentation.factory import (
     build_augmentation,
     build_augmentations,
 )
-from eb_jepa_cleaned.AIML.Data.DataAugmentation.registry import (
+from src.AIML.Data.DataAugmentation.registry import (
     AUGMENTATION_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

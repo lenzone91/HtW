@@ -1,0 +1,6 @@
+# @package _global_
+# CSV logger. save_dir is resolved to the run's logs directory at build time.
+loggers:
+  csv:
+    save_dir: logs
+    name: csv_reports

@@ -8,7 +8,7 @@ import pytest
 import torch
 from torch import nn
 
-from eb_jepa_cleaned.AIML.Models.Modules.base import (
+from src.AIML.Models.Modules.base import (
     BaseLightningModule,
 )
 

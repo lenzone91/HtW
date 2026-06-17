@@ -7,15 +7,15 @@ type-field routing, config isolation, and the strict error surface.
 
 import pytest
 
-from eb_jepa_cleaned.Workflow.Factory.builder import (
+from src.Workflow.Factory.builder import (
     RegistryBuilder,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     BuilderError,
     FactoryError,
     RegistryError,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     FieldResolution,
     Registry,
     SubBuildDeclaration,

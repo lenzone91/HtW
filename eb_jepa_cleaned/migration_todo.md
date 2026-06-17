@@ -18,15 +18,15 @@ Status: done.
 
 ### Source skeleton
 
-- [x] Create `eb_jepa_cleaned/`.
-- [x] Create `eb_jepa_cleaned/README.md`.
+- [x] Create `src/`.
+- [x] Create `src/README.md`.
 
 ### Top-level folders
 
-- [x] Create `eb_jepa_cleaned/Workflow/`.
-- [x] Create `eb_jepa_cleaned/AIML/`.
-- [x] Create `eb_jepa_cleaned/JEPA/`.
-- [x] Create `eb_jepa_cleaned/AcVideoJEPA/`.
+- [x] Create `src/Workflow/`.
+- [x] Create `src/AIML/`.
+- [x] Create `src/JEPA/`.
+- [x] Create `src/AcVideoJEPA/`.
 
 ### Tests skeleton
 
@@ -44,9 +44,9 @@ Goal: migrate or implement generic project protocols first.
 
 ### Folders
 
-- [x] Create `eb_jepa_cleaned/Workflow/README.md`.
-- [x] Create `eb_jepa_cleaned/Workflow/Factory/README.md`.
-- [x] Create `eb_jepa_cleaned/Workflow/Configs/README.md`.
+- [x] Create `src/Workflow/README.md`.
+- [x] Create `src/Workflow/Factory/README.md`.
+- [x] Create `src/Workflow/Configs/README.md`.
 
 ### Factory
 
@@ -73,10 +73,13 @@ Goal: migrate or implement generic project protocols first.
 - [x] Add unit tests for config loading/composition.
 - [x] Add integration test for Hydra config -> plain dict -> factory.
 
-### Setup (deferred — Decision 22)
+### Setup (Decision 22 — now done)
 
-- [ ] Migrate runtime context conventions (device, paths, reproducibility,
-  environment, credentials). Postponed until AIML/Execution need them.
+- [x] Migrate runtime context conventions: `Workflow/Setup.build_runtime_context`
+  -> `{device, reproducibility, paths}` (device resolution, RNG seeding /
+  determinism, run-dir creation + existing-run-dir policy). Built from the
+  Hydra-composed `setup` config; separate channel from config (Decision 14).
+  Credentials / wandb-login + logger handles deferred (documented extension).
 
 ### Documentation
 
@@ -112,12 +115,12 @@ Scope notes (see Decisions 23-26):
 
 ### Structure
 
-- [ ] Create `eb_jepa_cleaned/AIML/README.md`.
-- [ ] Create `eb_jepa_cleaned/AIML/Data/README.md`.
-- [ ] Create `eb_jepa_cleaned/AIML/Models/README.md`.
-- [ ] Create `eb_jepa_cleaned/AIML/Metrics/README.md`.
-- [ ] Create `eb_jepa_cleaned/AIML/Training/README.md`.
-- [ ] Create `eb_jepa_cleaned/AIML/Execution/README.md`.
+- [ ] Create `src/AIML/README.md`.
+- [ ] Create `src/AIML/Data/README.md`.
+- [ ] Create `src/AIML/Models/README.md`.
+- [ ] Create `src/AIML/Metrics/README.md`.
+- [ ] Create `src/AIML/Training/README.md`.
+- [ ] Create `src/AIML/Execution/README.md`.
 
 ### Data
 
@@ -243,7 +246,7 @@ the architecture end-to-end. (Reference: the prior `HtW/Octave` migration.)
 
 ### Structure
 
-- [ ] Create the experiment under `eb_jepa_cleaned/AcVideoJEPA/`.
+- [ ] Create the experiment under `src/AcVideoJEPA/`.
 - [ ] Add the experiment README.
 
 ### Experiment objects
@@ -259,29 +262,54 @@ the architecture end-to-end. (Reference: the prior `HtW/Octave` migration.)
   multi-step prediction + the `LatentRolloutOutput` structure (local registry).
 - [ ] Migrate the video / frame-stack dataset(s) (e.g. two-rooms; vendor the
   WallDataset + env, Decision 30).
-- [ ] Migrate action conditioning (action encoder + action-conditioned predictor
-  wiring at module-build time).
-- [ ] Define the registered `AcVideoJepaModule` (`Models/Modules`, the JEPA
-  Lightning step) onto the AIML Lightning-module registry; probe encoder shape
-  into `runtime_context`.
-- [ ] Migrate planning / evaluation trajectories.
-- [ ] Un-defer Setup — implemented in `Workflow/Setup` (NOT AcVideoJEPA):
-  runtime_context, paths, reproducibility, launch (Decision 22). AcVideoJEPA
-  only consumes the resulting `runtime_context`.
+- [x] Migrate action conditioning (identity action encoder + action-conditioned
+  predictor wiring at module-build time, in `resolve_models`).
+- [x] Define the registered `AcVideoJepaModule` (`Models/Modules`, the JEPA
+  Lightning step) onto the AIML Lightning-module registry; encoder shape probed
+  in `resolve_models` and injected into `runtime_context` for the metric set.
+  Single optimizer over all params (covers metric IDM/projector). One-step
+  `trainer.fit` green.
+- [x] Vendor the two-rooms dataset/env (`Data/two_rooms`, verbatim copy,
+  Decision 30) + the `TwoRoomsDataset` adapter (registered `two_rooms`) + the
+  `AcVideoJepaCollator` (registered `ac_video_jepa`). DataLoader assembly uses
+  AIML's generic `DefaultDataModule` (no experiment datamodule).
+- [ ] Migrate planning / evaluation trajectories. (Deferred / optional.)
+- [x] Un-defer Setup — implemented in `Workflow/Setup` (NOT AcVideoJEPA):
+  runtime_context, paths, reproducibility (Decision 22). AcVideoJEPA only
+  consumes the resulting `runtime_context`.
+- [x] Run orchestration in `AIML/Execution`: `train.py` (`run_training`),
+  `resume.py` (`run_resume_training`, ckpt restore), `validate.py`
+  (`run_validation`), `snapshots.py`, and `launch.py` (the CLI/programmatic
+  entrypoint: compose -> setup -> dispatch by `--mode` or `config['run']['mode']`;
+  `--overwrite`/`--ask-overwrite`/`--ckpt` + Hydra overrides). Generic: registers
+  the experiment via `config['run']['imports']` (no static AIML->experiment dep).
 
 ### Flow
 
-- [ ] Add the experiment's Hydra config tree.
-- [ ] Compose config through Hydra.
-- [ ] Convert config to plain dict.
-- [ ] Build objects through factories.
-- [ ] Run a minimal Lightning flow.
-- [ ] Add smoke test (the end-to-end capstone).
+- [x] Build objects through factories (`build_training_objects`).
+- [x] Run a minimal Lightning flow.
+- [x] Add smoke test (the end-to-end capstone): `tests/smoke/` composes a full
+  plain-dict run config, builds via Execution, and runs one `trainer.fit` step
+  on real (tiny) two-rooms data. Green.
+- [x] Add the experiment's Hydra config tree (`AcVideoJEPA/configs/`: config +
+  setup/datamodule/module/trainer/loggers groups). Config-driven run validated
+  end to end (`tests/integration/AcVideoJEPA/`): Hydra compose -> resolve plain
+  dict -> build_runtime_context -> build_training_objects -> trainer.fit.
+- [x] wandb logging wired: registered `WandbLogger` with `save_dir` resolved to
+  the run logs dir; `Workflow/Setup.setup_wandb` (mode/login); `loggers` config
+  group (`none`/`csv`/`wandb`); run flows finalize wandb via
+  `close_external_services`. Validated offline in `tests/integration/AcVideoJEPA/
+  test_wandb_logging.py`. (W&B sweeps still deferred, Decision 26.)
+- [x] wandb API key from a user credential file: `Workflow/Setup`
+  `setup_user_credential` loads the gitignored `user_credential.yaml`
+  (`{wandb: {api_key: ...}}`) and exports `WANDB_API_KEY` (config
+  `setup.user_credential`), run before wandb login. Secrets never stored in the
+  runtime_context.
 
 ### Documentation
 
-- [ ] Document how AcVideoJEPA uses Workflow, AIML, and JEPA.
-- [ ] Update `chatbot_context.md`.
+- [x] Document how AcVideoJEPA uses Workflow + AIML (pillar/subfolder READMEs).
+- [x] Update `chatbot_context.md`.
 
 ## Phase 5 — Cleanup
 

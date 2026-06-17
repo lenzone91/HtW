@@ -4,16 +4,16 @@ Unit tests for AIML.Data.Collators.factory.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.factory import (
+from src.AIML.Data.Collators.factory import (
     build_collator,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.registry import (
+from src.AIML.Data.Collators.registry import (
     COLLATOR_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

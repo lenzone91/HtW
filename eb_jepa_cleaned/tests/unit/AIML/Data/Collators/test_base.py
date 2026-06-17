@@ -4,10 +4,10 @@ Unit tests for AIML.Data.Collators.base.BaseCollator.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.BatchTransform.base import (
+from src.AIML.Data.BatchTransform.base import (
     BaseBatchTransform,
 )
-from eb_jepa_cleaned.AIML.Data.Collators.base import (
+from src.AIML.Data.Collators.base import (
     BaseCollator,
 )
 

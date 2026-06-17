@@ -6,20 +6,20 @@ Registers dummy generic adaptations onto the shared registry and cleans up.
 
 import pytest
 
-from eb_jepa_cleaned.AIML.Data.BatchTransform.base import (
+from src.AIML.Data.BatchTransform.base import (
     BaseBatchTransform,
 )
-from eb_jepa_cleaned.AIML.Data.DataAdaptation.base import (
+from src.AIML.Data.DataAdaptation.base import (
     BaseAdaptation,
 )
-from eb_jepa_cleaned.AIML.Data.DataAdaptation.factory import (
+from src.AIML.Data.DataAdaptation.factory import (
     build_adaptation,
     build_adaptations,
 )
-from eb_jepa_cleaned.AIML.Data.DataAdaptation.registry import (
+from src.AIML.Data.DataAdaptation.registry import (
     ADAPTATION_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

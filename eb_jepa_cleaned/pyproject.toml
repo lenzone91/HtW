@@ -24,8 +24,9 @@ dependencies = [
 # AcVideoJEPA experiment deps (vendored two_rooms env + backbones). Installed
 # at Phase 4, not needed for the core framework baseline.
 acvideo = [
-    "pymunk",
     "gymnasium",
+    "scipy",
+    "pyyaml",
     "opencv-python",
     "einops",
     "wandb",
@@ -36,11 +37,11 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-# project/package layout: the single top-level package `eb_jepa_cleaned` holds
-# the four pillars (Workflow, AIML, JEPA, AcVideoJEPA) as subpackages. Internal
-# code uses relative imports; the common parent makes them resolve.
+# The source lives in `src/`, which is itself the top-level import package
+# (`src`) holding the pillars (Workflow, AIML, AcVideoJEPA) as subpackages.
+# Internal code uses relative imports; the common `src` parent makes them resolve.
 where = ["."]
-include = ["eb_jepa_cleaned*"]
+include = ["src*"]
 exclude = ["tests*"]
 
 [tool.pytest.ini_options]

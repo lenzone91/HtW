@@ -8,10 +8,10 @@ post-condition, and the leakage guard.
 import pytest
 from omegaconf import OmegaConf
 
-from eb_jepa_cleaned.Workflow.Configs.errors import (
+from src.Workflow.Configs.errors import (
     ConfigError,
 )
-from eb_jepa_cleaned.Workflow.Configs.resolve import (
+from src.Workflow.Configs.resolve import (
     check_plain_config,
     resolve_to_plain_dict,
 )

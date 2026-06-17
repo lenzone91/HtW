@@ -9,13 +9,13 @@ resolution, and nested sub-builds.
 
 import pytest
 
-from eb_jepa_cleaned.Workflow.Factory.builder import (
+from src.Workflow.Factory.builder import (
     RegistryBuilder,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     FactoryError,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     FieldResolution,
     Registry,
     SubBuildDeclaration,

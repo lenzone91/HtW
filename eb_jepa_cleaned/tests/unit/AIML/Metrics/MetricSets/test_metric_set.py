@@ -6,19 +6,19 @@ import pytest
 import torch
 from torch import nn
 
-from eb_jepa_cleaned.AIML.Metrics.Metrics.base import (
+from src.AIML.Metrics.Metrics.base import (
     BaseMetric,
 )
-from eb_jepa_cleaned.AIML.Metrics.Metrics.registry import (
+from src.AIML.Metrics.Metrics.registry import (
     METRIC_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.factory import (
+from src.AIML.Metrics.MetricSets.factory import (
     build_metric_set,
 )
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.loggable_metric_set import (
+from src.AIML.Metrics.MetricSets.loggable_metric_set import (
     LoggableMetricSet,
 )
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.metric_set import (
+from src.AIML.Metrics.MetricSets.metric_set import (
     MetricSet,
 )
 

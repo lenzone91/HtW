@@ -5,10 +5,10 @@ Unit tests for AIML.Training.Schedulers.factory.
 import pytest
 import torch
 
-from eb_jepa_cleaned.AIML.Training.Schedulers.factory import (
+from src.AIML.Training.Schedulers.factory import (
     build_schedulers,
 )
-from eb_jepa_cleaned.Workflow.Factory.errors import (
+from src.Workflow.Factory.errors import (
     RegistryError,
 )
 

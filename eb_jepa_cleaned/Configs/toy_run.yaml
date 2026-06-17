@@ -1,0 +1,33 @@
+# A user run config. One file here = one run.
+#
+# It reuses the framework's config groups (shipped in src/AcVideoJEPA/configs) via
+# the pkg:// search path, then sets this run's identity and overrides. Launch with:
+#
+#   python -m src.AIML.Execution.launch Configs --config-name toy_run
+#
+# `run_name` identifies the results directory (runs/<experiment>/<run_name>). With
+# existing_run_dir_policy: ask, re-running this config prompts to delete the
+# previous results, then runs fresh.
+
+defaults:
+  - setup: default
+  - datamodule: two_rooms_toy
+  - module: ac_video_jepa
+  - trainer: toy
+  - loggers: none
+  - _self_
+
+hydra:
+  searchpath:
+    - pkg://src.AcVideoJEPA.configs
+
+run:
+  mode: train
+  imports:
+    - src.AcVideoJEPA
+  checkpoint_path: null
+
+setup:
+  paths:
+    run_name: toy_run
+    existing_run_dir_policy: ask

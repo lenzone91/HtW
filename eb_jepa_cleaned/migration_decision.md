@@ -19,12 +19,12 @@ Status: superseded by Decision 30.
 
 The target source hierarchy is:
 
-    eb_jepa_cleaned/
+    src/
       Workflow/
       AIML/
       AcVideoJEPA/
 
-Reason: the previous flat or semi-flat organization made ownership harder to reason about. The new hierarchy separates generic Python protocols, generic ML logic, and the concrete action-conditioned video JEPA experiment. (An early plan added a separate `JEPA` pillar; it was removed — see Decision 33. The package directory was `src/` early in the migration; see Decision 31.)
+Reason: the previous flat or semi-flat organization made ownership harder to reason about. The new hierarchy separates generic Python protocols, generic ML logic, and the concrete action-conditioned video JEPA experiment. (An early plan added a separate `JEPA` pillar; it was removed — see Decision 33. The package lives in `src/`; see Decision 31.)
 
 Status: accepted.
 
@@ -235,13 +235,21 @@ Reason: the migration is large and will require switching between chatbots. The 
 
 Status: accepted.
 
-## Decision 22 — Workflow/Setup is deferred
+## Decision 22 — Workflow/Setup (deferred in Phase 1, now done)
 
-`Workflow/Setup` (runtime context conventions: device, paths, reproducibility, environment, credentials) is not migrated during Phase 1.
+`Workflow/Setup` (runtime context conventions: device, paths, reproducibility, environment, credentials) was not migrated during Phase 1.
 
-Reason: the setup/runtime-context policy is expected to change as AIML, Execution, and concrete projects take shape. Migrating it before its consumers exist would lock in a shape likely to be reworked. It will be migrated when AIML/Execution need it.
+Reason: the setup/runtime-context policy was expected to change as AIML, Execution, and concrete projects took shape. Migrating it before its consumers existed would lock in a shape likely to be reworked.
 
-Status: accepted.
+Update: implemented once AcVideoJEPA needed a config-driven run. `Workflow/Setup`
+provides `build_runtime_context(setup_config)` -> `{device, reproducibility,
+paths}` (device resolution, RNG seeding/determinism, run-dir creation with an
+existing-run-dir policy). It builds the runtime_context from the Hydra-composed
+`setup` config and the live environment, kept as a separate channel from config
+(Decision 14). Credentials / wandb-login and logger handles remain a documented
+extension (loggers are built by AIML from config; sweeps deferred, Decision 26).
+
+Status: accepted; Setup implemented (device/reproducibility/paths).
 
 ## Decision 23 — Strict rewrite removes all permissive plumbing
 
@@ -397,29 +405,28 @@ fits the "cleaner, more modular" goal.
 
 Status: accepted.
 
-## Decision 31 — project/package layout; single `eb_jepa_cleaned` package
+## Decision 31 — `src/` is the importable package
 
-The repository uses a `project/package` layout: the project root holds
-`pyproject.toml` and the importable package directory `eb_jepa_cleaned/`, which
-contains the pillars (`Workflow`, `AIML`, `AcVideoJEPA`) as subpackages:
+The source lives in `src/`, which IS the top-level import package `src`; the
+pillars are its subpackages:
 
-    eb_jepa_cleaned/            <- project root (pyproject.toml, tests/)
-      eb_jepa_cleaned/          <- the importable package
+    eb_jepa_cleaned/            <- project root (README, pyproject.toml, tests/, Configs/)
+      src/                      <- the importable package (`import src...`)
         Workflow/ AIML/ AcVideoJEPA/
 
 Discovered via `[tool.setuptools.packages.find] where = ["."]`,
-`include = ["eb_jepa_cleaned*"]`. Import paths are `eb_jepa_cleaned.Workflow.…`,
-`eb_jepa_cleaned.AIML.…`, etc. Internal code uses relative imports.
+`include = ["src*"]`. Import paths are `src.Workflow.…`, `src.AIML.…`,
+`src.AcVideoJEPA.…`. Internal code uses relative imports.
 
-Reason: the existing source uses deep relative imports (e.g. `from ....Workflow`
-reaching across pillars), which require the pillars to share a common parent
-package. Exposing the pillars as bare top-level packages breaks those imports
-("relative import beyond top-level package"). A single `eb_jepa_cleaned` parent
-package both satisfies the relative imports and gives explicit, collision-free
-import paths. The source directory was renamed `src/` -> `eb_jepa_cleaned/` to
-achieve this with standard setuptools discovery (no `package-dir` tricks).
+Reason: the source uses deep relative imports (e.g. `from ....Workflow` reaching
+across pillars), which require the pillars to share a common parent package.
+`src` being that parent both satisfies the relative imports and keeps the
+conventional project layout (`src/` for source, `Configs/`, `tests/` at root).
+The generic top-level name `src` is acceptable inside the project's dedicated
+virtual environment.
 
-Status: accepted (revisitable).
+Status: accepted (revisitable: a namespaced `eb_jepa_cleaned.*` root would need a
+`src/eb_jepa_cleaned/` layout or a `package-dir` mapping).
 
 ## Decision 32 — Dedicated virtual environment, deps split by pillar
 

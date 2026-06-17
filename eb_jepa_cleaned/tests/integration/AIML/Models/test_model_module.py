@@ -11,40 +11,40 @@ import pytest
 import torch
 from torch import nn
 
-from eb_jepa_cleaned.AIML.Metrics.Loss.factory import (
+from src.AIML.Metrics.Loss.factory import (
     build_loss,
 )
-from eb_jepa_cleaned.AIML.Metrics.Loss.loss import (
+from src.AIML.Metrics.Loss.loss import (
     WeightedMetricLoss,
 )
-from eb_jepa_cleaned.AIML.Metrics.Metrics.base import (
+from src.AIML.Metrics.Metrics.base import (
     BaseMetric,
 )
-from eb_jepa_cleaned.AIML.Metrics.Metrics.registry import (
+from src.AIML.Metrics.Metrics.registry import (
     METRIC_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.factory import (
+from src.AIML.Metrics.MetricSets.factory import (
     build_metric_set,
 )
-from eb_jepa_cleaned.AIML.Metrics.MetricSets.metric_set import (
+from src.AIML.Metrics.MetricSets.metric_set import (
     MetricSet,
 )
-from eb_jepa_cleaned.AIML.Models.Models.factory import (
+from src.AIML.Models.Models.factory import (
     build_model,
 )
-from eb_jepa_cleaned.AIML.Models.Models.registry import (
+from src.AIML.Models.Models.registry import (
     MODEL_REGISTRY,
 )
-from eb_jepa_cleaned.AIML.Models.Modules.base import (
+from src.AIML.Models.Modules.base import (
     BaseLightningModule,
 )
-from eb_jepa_cleaned.AIML.Models.Modules.factory import (
+from src.AIML.Models.Modules.factory import (
     build_lightning_module,
 )
-from eb_jepa_cleaned.AIML.Models.Modules.registry import (
+from src.AIML.Models.Modules.registry import (
     LIGHTNING_MODULE_REGISTRY,
 )
-from eb_jepa_cleaned.Workflow.Factory.registry import (
+from src.Workflow.Factory.registry import (
     FieldResolution,
 )
 

@@ -6,13 +6,13 @@ import pytest
 import torch
 from torch import nn
 
-from eb_jepa_cleaned.AIML.Models.Loading.factory import (
+from src.AIML.Models.Loading.factory import (
     check_loading_type,
     is_loading_enabled,
     load_model_if_needed,
     resolve_checkpoint_path,
 )
-from eb_jepa_cleaned.AIML.Models.Loading.model_loading import (
+from src.AIML.Models.Loading.model_loading import (
     extract_state_dict,
     load_model_state_dict,
 )

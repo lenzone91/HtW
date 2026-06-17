@@ -6,11 +6,11 @@ Covers plain-dict file load/save round-trips and the strict error surface.
 
 import pytest
 
-from eb_jepa_cleaned.Workflow.Configs.conversion import (
+from src.Workflow.Configs.conversion import (
     load_config,
     save_config,
 )
-from eb_jepa_cleaned.Workflow.Configs.errors import (
+from src.Workflow.Configs.errors import (
     ConfigError,
 )
 
