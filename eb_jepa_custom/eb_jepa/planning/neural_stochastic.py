@@ -28,6 +28,8 @@ class NeuralStochasticPlanner(Planner):
         max_norms: Optional[list[float] | str] = "auto",
         max_norm_dims: Optional[list[list[int]]] = None,
         sampler_target: Optional[str] = None,
+        sampler_kwargs: Optional[dict] = None,
+        sampler_checkpoint: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -66,6 +68,11 @@ class NeuralStochasticPlanner(Planner):
         sampler_target : str, optional
             Dotted Python target for a future learned sampler class. When
             omitted, the planner uses the random fallback sampler.
+        sampler_kwargs : dict, optional
+            Keyword arguments used to instantiate ``sampler_target``.
+        sampler_checkpoint : str, optional
+            Optional checkpoint path for a trained sampler. Checkpoints saved by
+            ``NeuralActionSamplerTrainer`` are supported.
         **kwargs
             Extra planner configuration values accepted for compatibility with
             shared YAML configs.
@@ -75,11 +82,14 @@ class NeuralStochasticPlanner(Planner):
         self.num_samples = num_samples
         self.variance = variance
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.action_sampler = (
-            import_from_target(sampler_target)() if sampler_target is not None else None
-        )
+        sampler_kwargs = sampler_kwargs or {}
+        self.action_sampler = None
+        if sampler_target is not None:
+            self.action_sampler = import_from_target(sampler_target)(**sampler_kwargs)
         if hasattr(self.action_sampler, "to"):
             self.action_sampler = self.action_sampler.to(self.device)
+        if sampler_checkpoint is not None:
+            self._load_sampler_checkpoint(sampler_checkpoint)
 
         action_low, action_high = self._extract_action_bounds(
             action_space=action_space,
@@ -332,6 +342,30 @@ class NeuralStochasticPlanner(Planner):
             getattr(action_space, "low", action_low),
             getattr(action_space, "high", action_high),
         )
+
+    def _load_sampler_checkpoint(self, sampler_checkpoint: str):
+        """
+        Load trained sampler weights from a checkpoint.
+
+        Parameters
+        ----------
+        sampler_checkpoint : str
+            Path to a checkpoint. The method accepts checkpoints saved by
+            ``NeuralActionSamplerTrainer`` under the ``"sampler"`` key, or a raw
+            sampler ``state_dict``.
+        """
+        if self.action_sampler is None:
+            raise ValueError("sampler_checkpoint requires sampler_target")
+        checkpoint = torch.load(
+            sampler_checkpoint, map_location=self.device, weights_only=False
+        )
+        if isinstance(checkpoint, dict) and "sampler" in checkpoint:
+            state_dict = checkpoint["sampler"]
+        elif isinstance(checkpoint, dict) and "state_dict" in checkpoint:
+            state_dict = checkpoint["state_dict"]
+        else:
+            state_dict = checkpoint
+        self.action_sampler.load_state_dict(state_dict)
 
     def _project_action_norms(self, actions: torch.Tensor) -> torch.Tensor:
         """

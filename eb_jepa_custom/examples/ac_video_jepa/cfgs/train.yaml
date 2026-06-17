@@ -54,6 +54,31 @@ optim:
 eval:
   plan_cfg_path: examples/ac_video_jepa/cfgs/planning_cem.yaml # eb_jepa/planning_mppi.yaml
   eval_cfg_path: examples/ac_video_jepa/cfgs/eval.yaml
+planner_training:
+  enabled: false
+  # Train the neural planner/sampler from a frozen world model checkpoint.
+  worldmodel:
+    config_path: examples/ac_video_jepa/cfgs/train.yaml
+    checkpoint_path: ${meta.model_folder}/latest.pth.tar
+    strict: true
+  sampler:
+    target: eb_jepa.planning.samplers.NeuralActionSampler
+    kwargs:
+      action_dim: 2
+      hidden_dim: 256
+    checkpoint_path: ${meta.model_folder}/neural_action_sampler.pth
+    resume: false
+  train:
+    epochs: 5
+    plan_length: 16
+    variance: 1.0
+    lr: 0.001
+    grad_clip_norm: 1.0
+    log_every: 10
+  action_space:
+    source: env # env | manual
+    low:
+    high:
 
 # --- Parameters used when running with --full-sweep
 # By default, only the parameters specified above are used
