@@ -23,6 +23,8 @@ from eb_jepa.datasets.utils import init_data
 from eb_jepa.jepa import JEPA, JEPAProbe
 from eb_jepa.logging import get_logger
 from eb_jepa.losses import SquareLossSeq, VC_IDM_Sim_Regularizer
+from eb_jepa.planning.samplers import NeuralActionSamplerTrainer
+from eb_jepa.planning.utils import import_from_target
 from eb_jepa.schedulers import CosineWithWarmup
 from eb_jepa.state_decoder import MLPXYHead
 from eb_jepa.training_utils import (
@@ -43,6 +45,40 @@ from eb_jepa.training_utils import (
 from examples.ac_video_jepa.eval import launch_plan_eval, launch_unroll_eval
 
 logger = get_logger(__name__)
+
+
+def _resolve_path(path, base_folder=None):
+    if path is None:
+        return None
+    path = Path(path)
+    if path.is_absolute() or base_folder is None:
+        return path
+    return Path(base_folder) / path
+
+
+def _get_planner_training_action_bounds(cfg, data_config, device):
+    action_space_cfg = cfg.planner_training.get("action_space", {})
+    source = action_space_cfg.get("source", "env")
+    if source == "manual":
+        action_low = action_space_cfg.get("low")
+        action_high = action_space_cfg.get("high")
+        if action_low is None or action_high is None:
+            raise ValueError("manual planner_training.action_space requires low/high")
+    elif source == "env":
+        if cfg.data.env_name != "two_rooms":
+            raise ValueError("Only two_rooms env action bounds are supported for now")
+        from eb_jepa.datasets.two_rooms.env import DotWall
+
+        env_kwargs = dict(cfg.planner_training.get("env", {}))
+        env = DotWall(config=data_config, **env_kwargs)
+        action_low = env.action_space.low
+        action_high = env.action_space.high
+    else:
+        raise ValueError(f"Unknown planner_training.action_space.source={source}")
+    return (
+        torch.as_tensor(action_low, dtype=torch.float32, device=device),
+        torch.as_tensor(action_high, dtype=torch.float32, device=device),
+    )
 
 
 def run(
@@ -249,13 +285,80 @@ def run(
     start_epoch = 0
     ckpt_info = {}
     if cfg.meta.load_model:
-        checkpoint_path = folder / cfg.meta.get("load_checkpoint", "latest.pth.tar")
+        if cfg.get("planner_training", {}).get("enabled", False):
+            checkpoint_path = cfg.planner_training.worldmodel.get("checkpoint_path")
+            checkpoint_path = _resolve_path(checkpoint_path, folder)
+            strict = cfg.planner_training.worldmodel.get("strict", True)
+        else:
+            checkpoint_path = folder / cfg.meta.get("load_checkpoint", "latest.pth.tar")
+            strict = True
         ckpt_info = load_checkpoint(
-            checkpoint_path, jepa, jepa_optimizer, jepa_scheduler, device=device
+            checkpoint_path,
+            jepa,
+            jepa_optimizer,
+            jepa_scheduler,
+            device=device,
+            strict=strict,
         )
+        if cfg.get("planner_training", {}).get("enabled", False) and not ckpt_info.get(
+            "resumed", False
+        ):
+            raise FileNotFoundError(
+                f"planner_training worldmodel checkpoint not loaded: {checkpoint_path}"
+            )
         start_epoch = ckpt_info.get("epoch", 0)
         if "xy_head_state_dict" in ckpt_info:
             xy_head.load_state_dict(ckpt_info["xy_head_state_dict"])
+
+    # -- PLANNER / SAMPLER TRAINING MODE
+    if cfg.get("planner_training", {}).get("enabled", False):
+        if not cfg.meta.load_model:
+            raise ValueError("planner_training requires meta.load_model=True")
+        logger.info("Running planner sampler training from frozen worldmodel")
+        for param in jepa.parameters():
+            param.requires_grad_(False)
+        jepa.eval()
+
+        sampler_target = cfg.planner_training.sampler.target
+        sampler_kwargs = OmegaConf.to_container(
+            cfg.planner_training.sampler.get("kwargs", {}), resolve=True
+        )
+        sampler = import_from_target(sampler_target)(**sampler_kwargs)
+        action_low, action_high = _get_planner_training_action_bounds(
+            cfg, data_config, device
+        )
+        trainer = NeuralActionSamplerTrainer(
+            sampler=sampler,
+            model=jepa,
+            action_low=action_low,
+            action_high=action_high,
+            plan_length=cfg.planner_training.train.get("plan_length"),
+            variance=cfg.planner_training.train.get("variance", 1.0),
+            lr=cfg.planner_training.train.get("lr", 1e-3),
+            grad_clip_norm=cfg.planner_training.train.get("grad_clip_norm"),
+            device=device,
+        )
+
+        sampler_checkpoint = _resolve_path(
+            cfg.planner_training.sampler.get("checkpoint_path"),
+            folder,
+        )
+        if cfg.planner_training.sampler.get("resume", False):
+            trainer.load_checkpoint(sampler_checkpoint)
+
+        history = trainer.fit(
+            loader,
+            epochs=cfg.planner_training.train.get("epochs", 1),
+            log_every=cfg.planner_training.train.get("log_every"),
+        )
+        sampler_checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        trainer.save_checkpoint(sampler_checkpoint)
+        final_loss = history[-1].loss if history else None
+        logger.info(f"Saved planner sampler checkpoint to {sampler_checkpoint}")
+        return {
+            "planner_training/final_loss": final_loss,
+            "planner_training/checkpoint_path": str(sampler_checkpoint),
+        }
 
     # Compile
     if torch.cuda.is_available() and cfg.model.compile:

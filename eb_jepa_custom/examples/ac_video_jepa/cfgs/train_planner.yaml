@@ -1,0 +1,82 @@
+logging:
+  log_wandb: false
+  wandb_group:
+  wandb_sweep:
+  log_every: 10
+  exp_suffix: planner
+  save_every_n_epochs: 1
+  tqdm_silent: false
+meta:
+  # Set this to the folder containing the trained worldmodel checkpoint.
+  # You can also pass it from the CLI with:
+  # --meta.model_folder=/path/to/worldmodel_folder
+  model_folder:
+  load_model: true
+  load_checkpoint: latest.pth.tar
+  enable_plan_eval: false
+  eval_only_mode: false
+  eval_every_itr: -1
+  light_eval_freq: 50
+  seed: 1
+data:
+  env_name: two_rooms
+  batch_size: 384
+  num_workers: 16
+  pin_mem: true
+  persistent_workers: true
+training:
+  use_amp: true
+  dtype: bfloat16
+model:
+  compile: false
+  dobs: 2
+  henc: 32
+  hpre: 32
+  dstc: 32
+  nsteps: 8
+  encoder_architecture: impala
+  train_rollout: last
+  encoder_skip_connections: true
+  predictor_skip_connections: true
+  regularizer:
+    cov_coeff: 8
+    std_coeff: 16
+    sim_coeff_t: 12
+    idm_coeff: 1
+    first_t_only: false
+    spatial_as_samples: false
+    use_proj: false
+    idm_after_proj: false
+    sim_t_after_proj: false
+optim:
+  epochs: 1
+  lr: 0.001
+  grad_clip_enc: 2.0
+  grad_clip_pred: 2.0
+  weight_decay: 1.e-5
+eval:
+  plan_cfg_path: examples/ac_video_jepa/cfgs/planning_neural_stochastic.yaml
+  eval_cfg_path: examples/ac_video_jepa/cfgs/eval.yaml
+planner_training:
+  enabled: true
+  worldmodel:
+    checkpoint_path: latest.pth.tar
+    strict: true
+  sampler:
+    target: eb_jepa.planning.samplers.NeuralActionSampler
+    kwargs:
+      action_dim: 2
+      hidden_dim: 256
+    checkpoint_path: neural_action_sampler.pth
+    resume: false
+  train:
+    epochs: 5
+    plan_length: 16
+    variance: 1.0
+    lr: 0.001
+    grad_clip_norm: 1.0
+    log_every: 10
+  action_space:
+    source: env
+    low:
+    high:
