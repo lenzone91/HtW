@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eb_jepa_cleaned"
+version = "0.1.0"
+description = "A clean, modular framework for JEPA experiments (re-implementation of ac_video_jepa)."
+requires-python = ">=3.12"
+
+# Core framework dependencies (Workflow / AIML / JEPA pillars).
+# Deliberately does NOT depend on the `eb_jepa` package: this project is
+# standalone and re-implements / vendors the primitives it needs.
+dependencies = [
+    "torch==2.6.0",
+    "lightning==2.6.5",
+    "torchmetrics==1.9.0",
+    "hydra-core==1.3.2",
+    "omegaconf==2.3.0",
+    "numpy",
+]
+
+[project.optional-dependencies]
+# AcVideoJEPA experiment deps (vendored two_rooms env + backbones). Installed
+# at Phase 4, not needed for the core framework baseline.
+acvideo = [
+    "pymunk",
+    "gymnasium",
+    "opencv-python",
+    "einops",
+    "wandb",
+]
+# Test / development tooling.
+dev = [
+    "pytest",
+]
+
+[tool.setuptools.packages.find]
+# project/package layout: the single top-level package `eb_jepa_cleaned` holds
+# the four pillars (Workflow, AIML, JEPA, AcVideoJEPA) as subpackages. Internal
+# code uses relative imports; the common parent makes them resolve.
+where = ["."]
+include = ["eb_jepa_cleaned*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
