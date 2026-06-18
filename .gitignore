@@ -15,7 +15,10 @@ stage_mva/
 .venv*/
 .venv312/
 
+# Ignore the credential *data* file (secrets), but keep the source module that
+# loads it (user_credential.py) tracked.
 **/user_credential.*
+!**/user_credential.py
 
 **/results/
 
