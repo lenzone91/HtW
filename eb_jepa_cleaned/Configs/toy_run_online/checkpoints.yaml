@@ -1,0 +1,17 @@
+# @package checkpoints
+# Every checkpoint type the package exposes: latest (resume), periodic
+# (every N epochs), and best-by-validation.
+last:
+  checkpoint_type: last
+  filename: last
+  every_n_epochs: 1
+periodic:
+  checkpoint_type: periodic
+  filename: "{epoch}-{step}"      # Lightning expands {epoch} to "epoch=N"
+  every_n_epochs: 5
+best_val:
+  checkpoint_type: best_value
+  monitor: val/loss
+  mode: min
+  save_top_k: 1
+  filename: best-{epoch}-{step}

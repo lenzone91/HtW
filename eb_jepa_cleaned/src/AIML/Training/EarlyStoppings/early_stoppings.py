@@ -9,6 +9,14 @@ from .registry import EARLY_STOPPING_REGISTRY
 
 # Each object is preceded by its own default config.
 
+# Lightning's EarlyStopping always evaluates a no-improvement (plateau) criterion
+# in addition to its finite/threshold/divergence short-circuits, stopping once
+# `wait_count >= patience`. The single-criterion guards below (threshold,
+# divergence, finite-value) must fire ONLY on their own criterion, never on a
+# plateau — so they disable the plateau path with an unreachable patience rather
+# than patience=0 (which would stop on the first non-improving epoch).
+_NEVER_ON_PLATEAU = 1_000_000_000
+
 
 DEFAULT_BEST_VALUE_STAGNATION_EARLY_STOPPING_CONFIG = {
     "monitor": "val/loss",
@@ -49,7 +57,7 @@ class ThresholdEarlyStopping(EarlyStopping):
     def __init__(self, **config):
         config = dict(config)
         config.pop("patience", None)
-        super().__init__(patience=0, **config)
+        super().__init__(patience=_NEVER_ON_PLATEAU, **config)
 
 
 DEFAULT_DIVERGENCE_EARLY_STOPPING_CONFIG = {
@@ -72,7 +80,7 @@ class DivergenceEarlyStopping(EarlyStopping):
     def __init__(self, **config):
         config = dict(config)
         config.pop("patience", None)
-        super().__init__(patience=0, **config)
+        super().__init__(patience=_NEVER_ON_PLATEAU, **config)
 
 
 DEFAULT_FINITE_VALUE_EARLY_STOPPING_CONFIG = {
@@ -93,4 +101,4 @@ class FiniteValueEarlyStopping(EarlyStopping):
     def __init__(self, **config):
         config = dict(config)
         config.pop("patience", None)
-        super().__init__(patience=0, **config)
+        super().__init__(patience=_NEVER_ON_PLATEAU, check_finite=True, **config)

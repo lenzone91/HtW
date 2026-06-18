@@ -1,0 +1,18 @@
+# @package early_stoppings
+# Early-stopping safety guards. Tuned so a healthy 10-epoch run is never cut
+# short — they only fire on pathological training.
+finite_val_loss:                 # kill the run if val/loss becomes NaN / inf
+  early_stopping_type: finite_value
+  monitor: val/loss
+  mode: min
+divergence_guard:                # kill the run if val/loss explodes
+  early_stopping_type: divergence
+  monitor: val/loss
+  mode: min
+  divergence_threshold: 1000000.0
+plateau:                         # stop on a long validation plateau (patience high)
+  early_stopping_type: best_value_stagnation
+  monitor: val/loss
+  mode: min
+  patience: 100
+  min_delta: 0.0

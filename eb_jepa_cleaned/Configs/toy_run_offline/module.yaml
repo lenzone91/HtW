@@ -1,0 +1,72 @@
+# @package module
+ac_video_jepa:
+  module_type: ac_video_jepa
+  encoder:
+    input_shape: [2, 16, 16]
+    input_channels: 2
+    stack_sizes: [4, 8]
+    num_blocks: 1
+    mlp_output_dim: 32
+  predictor:
+    hidden_size: null
+    action_dim: 2
+    num_layers: 1
+    use_encoder_final_ln: true
+  action_encoder:
+    action_encoder_type: identity
+  rollout:
+    rollout_type: latent
+    nsteps: 1
+    unroll_mode: autoregressive
+    ctxt_window_time: 1
+    return_all_steps: false
+  metrics:
+    set_type: metric
+    metrics:
+      # Prediction term.
+      autoregressive_prediction_loss:
+        prediction_cost:
+          prediction_cost_type: square_loss_seq
+          use_projector: false
+          proj: null
+      # Variance regularizer (projector on, to exercise the projector path).
+      hinge_std:
+        projector: {enabled: true, mlp_spec: null, hidden_multiplier: 4}
+        std_margin: 1.0
+        first_t_only: false
+        spatial_as_samples: false
+      # Covariance regularizer (projector on).
+      covariance:
+        projector: {enabled: true, mlp_spec: null, hidden_multiplier: 4}
+        first_t_only: false
+        spatial_as_samples: false
+      # Temporal-similarity regularizer.
+      temporal_similarity:
+        projector: {enabled: true, mlp_spec: null, hidden_multiplier: 4}
+        after_projection: false
+      # Inverse-dynamics regularizer (learned action predictor).
+      inverse_dynamics:
+        projector: {enabled: true, mlp_spec: null, hidden_multiplier: 4}
+        inverse_dynamics_model: {enabled: true, hidden_dim: 256, action_dim: 2}
+        after_projection: false
+  loss:
+    loss_type: weighted_metric
+    metric_weights:
+      autoregressive_prediction_loss: 1.0
+      hinge_std: 0.1
+      covariance: 0.1
+      temporal_similarity: 0.1
+      inverse_dynamics: 0.1
+  optimizer_configs:
+    optimizer:
+      optimizer_type: adam
+      lr: 0.001
+  scheduler_configs:
+    optimizer:                               # name must match the optimizer above
+      scheduler_type: cosine_annealing       # LR schedule over the 10 epochs
+      T_max: 10
+      eta_min: 0.0
+  watch_gradients:                           # W&B gradient + parameter histograms
+    enabled: true
+    log: all                                 # gradients + parameters
+    log_freq: 50

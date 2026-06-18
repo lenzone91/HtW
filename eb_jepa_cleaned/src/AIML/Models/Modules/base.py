@@ -1,8 +1,19 @@
 import lightning.pytorch as pl
+from lightning.pytorch.loggers import WandbLogger
 from torch import nn
 
 from ...Training.Optimizers.factory import build_optimizers_from_models
 from ...Training.Schedulers.factory import build_schedulers
+
+
+# Gradient logging is a sanity check, not a metric: it goes to W&B (histograms
+# via wandb.watch), not the CSV. Disabled by default; opt in via the
+# `watch_gradients` module config.
+DEFAULT_WATCH_GRADIENTS = {
+    "enabled": False,
+    "log": "gradients",  # "gradients" | "parameters" | "all"
+    "log_freq": 100,     # log every N training steps
+}
 
 
 #############################################
@@ -40,12 +51,17 @@ class BaseLightningModule(pl.LightningModule):
         models: dict,
         optimizer_configs: dict,
         scheduler_configs: dict,
+        watch_gradients: dict | None = None,
     ):
         super().__init__()
 
         self.models = nn.ModuleDict(models)
         self.optimizer_configs = optimizer_configs
         self.scheduler_configs = scheduler_configs
+        self.watch_gradients = {
+            **DEFAULT_WATCH_GRADIENTS,
+            **(watch_gradients or {}),
+        }
 
     def forward(self, x):
         raise NotImplementedError
@@ -76,6 +92,43 @@ class BaseLightningModule(pl.LightningModule):
             return optimizers
 
         return optimizers, schedulers
+
+    #############################################
+    # Gradient logging (W&B sanity check)
+    #############################################
+
+    def _wandb_loggers(self) -> list:
+        loggers = self.trainer.loggers if self.trainer else []
+        return [logger for logger in loggers if isinstance(logger, WandbLogger)]
+
+    def on_fit_start(self) -> None:
+        """
+        Ask each W&B logger to watch this module (gradient/parameter histograms).
+
+        Opt in via the `watch_gradients` module config. This is a sanity check,
+        so it only targets W&B; a no-op when no W&B logger is active.
+        """
+        config = getattr(self, "watch_gradients", DEFAULT_WATCH_GRADIENTS)
+        if not config.get("enabled", False):
+            return
+        for logger in self._wandb_loggers():
+            logger.watch(
+                self,
+                log=config.get("log", "gradients"),
+                log_freq=config.get("log_freq", 100),
+            )
+
+    def on_fit_end(self) -> None:
+        config = getattr(self, "watch_gradients", DEFAULT_WATCH_GRADIENTS)
+        if not config.get("enabled", False):
+            return
+        for logger in self._wandb_loggers():
+            # Remove the wandb hooks so a second fit in the same process does not
+            # double-watch; defensive against backend/offline quirks.
+            try:
+                logger.experiment.unwatch(self)
+            except Exception:
+                pass
 
     #############################################
     # Log helpers

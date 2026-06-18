@@ -1,0 +1,12 @@
+# @package _global_
+# Both loggers active. save_dir is overridden to the run's logs directory at
+# build time. W&B is ONLINE here (offline: false), so it needs the key/login
+# configured in setup.yaml.
+loggers:
+  csv:
+    name: csv_reports
+  wandb:
+    project: ac_video_jepa
+    name: toy_run_online
+    offline: false
+    log_model: true

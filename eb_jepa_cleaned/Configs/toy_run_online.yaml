@@ -8,19 +8,19 @@ setup:
     project_root: null
     run_root: runs
     experiment_name: ac_video_jepa
-    run_name: toy_run_2
+    run_name: toy_run_online
     existing_run_dir_policy: ask
   user_credential:
-    enabled: false
+    enabled: true
     path: user_credential.yaml
     environment_variables:
       WANDB_API_KEY:
       - wandb
       - api_key
   wandb:
-    enabled: false
+    enabled: true
     mode: online
-    login: false
+    login: true
     api_key_env_var: WANDB_API_KEY
 datamodule:
   default:
@@ -94,7 +94,7 @@ module:
             proj: null
         hinge_std:
           projector:
-            enabled: false
+            enabled: true
             mlp_spec: null
             hidden_multiplier: 4
           std_margin: 1.0
@@ -102,24 +102,50 @@ module:
           spatial_as_samples: false
         covariance:
           projector:
-            enabled: false
+            enabled: true
             mlp_spec: null
             hidden_multiplier: 4
           first_t_only: false
           spatial_as_samples: false
+        temporal_similarity:
+          projector:
+            enabled: true
+            mlp_spec: null
+            hidden_multiplier: 4
+          after_projection: false
+        inverse_dynamics:
+          projector:
+            enabled: true
+            mlp_spec: null
+            hidden_multiplier: 4
+          inverse_dynamics_model:
+            enabled: true
+            hidden_dim: 256
+            action_dim: 2
+          after_projection: false
     loss:
       loss_type: weighted_metric
       metric_weights:
         autoregressive_prediction_loss: 1.0
-        hinge_std: 1.0
-        covariance: 1.0
+        hinge_std: 0.1
+        covariance: 0.1
+        temporal_similarity: 0.1
+        inverse_dynamics: 0.1
     optimizer_configs:
       optimizer:
         optimizer_type: adam
         lr: 0.001
-    scheduler_configs: {}
+    scheduler_configs:
+      optimizer:
+        scheduler_type: cosine_annealing
+        T_max: 10
+        eta_min: 0.0
+    watch_gradients:
+      enabled: true
+      log: all
+      log_freq: 50
 trainer:
-  max_epochs: 2
+  max_epochs: 10
   accelerator: cpu
   enable_checkpointing: true
   check_val_every_n_epoch: 1
@@ -127,19 +153,24 @@ trainer:
   log_every_n_steps: 1
   enable_progress_bar: false
   enable_model_summary: false
+  gradient_clip_val: 1.0
 loggers:
   csv:
     name: csv_reports
   wandb:
     project: ac_video_jepa
-    name: toy_run_2
-    offline: true
-    log_model: false
+    name: toy_run_online
+    offline: false
+    log_model: true
 checkpoints:
   last:
     checkpoint_type: last
     filename: last
     every_n_epochs: 1
+  periodic:
+    checkpoint_type: periodic
+    filename: '{epoch}-{step}'
+    every_n_epochs: 5
   best_val:
     checkpoint_type: best_value
     monitor: val/loss
@@ -151,6 +182,17 @@ early_stoppings:
     early_stopping_type: finite_value
     monitor: val/loss
     mode: min
+  divergence_guard:
+    early_stopping_type: divergence
+    monitor: val/loss
+    mode: min
+    divergence_threshold: 1000000.0
+  plateau:
+    early_stopping_type: best_value_stagnation
+    monitor: val/loss
+    mode: min
+    patience: 100
+    min_delta: 0.0
 run:
   mode: train
   imports:

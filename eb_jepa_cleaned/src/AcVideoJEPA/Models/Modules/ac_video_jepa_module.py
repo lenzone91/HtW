@@ -192,6 +192,7 @@ DEFAULT_AC_VIDEO_JEPA_MODULE_CONFIG = {
     "encoder_shape": None,  # filled by resolve_models
     "optimizer_configs": {"optimizer": {"optimizer_type": "adam", "lr": 1e-3}},
     "scheduler_configs": {},
+    "watch_gradients": {"enabled": False, "log": "gradients", "log_freq": 100},
 }
 
 
@@ -215,11 +216,13 @@ class AcVideoJepaModule(BaseLightningModule):
         optimizer_configs: dict,
         scheduler_configs: dict,
         encoder_shape: dict | None = None,
+        watch_gradients: dict | None = None,
     ) -> None:
         super().__init__(
             models=models,
             optimizer_configs=optimizer_configs,
             scheduler_configs=scheduler_configs,
+            watch_gradients=watch_gradients,
         )
         self.rollout = rollout
         self.metric_set = metric_set

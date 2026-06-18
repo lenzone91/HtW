@@ -63,26 +63,31 @@ Check the install:
 Run configs live in [`Configs/`](Configs/) — **one run = one folder of fragments
 + a composed snapshot**:
 
-    Configs/toy_run/        editable fragments + config.yaml entry
-    Configs/toy_run.yaml    the merged snapshot (generated)
+    Configs/toy_run_offline/        editable fragments + config.yaml entry
+    Configs/toy_run_offline.yaml    the merged snapshot (generated)
+
+Two bundled "kitchen-sink" runs exercise every capability (all JEPA metrics with
+projectors, an LR scheduler, all checkpoint types, early-stopping guards, W&B
+gradient watching, CSV + W&B loggers; 10 epochs): `toy_run_offline` (W&B offline,
+runs out of the box) and `toy_run_online` (W&B online, needs a key).
 
 Each run sets its identity via `setup.paths.run_name`. Launch by pointing at the
 run folder (Hydra composes it) or the snapshot:
 
-    python -m src.AIML.Execution.launch Configs/toy_run
-    python -m src.AIML.Execution.launch Configs/toy_run.yaml
+    python -m src.AIML.Execution.launch Configs/toy_run_offline
+    python -m src.AIML.Execution.launch Configs/toy_run_offline.yaml
 
 - `--mode {train,resume,validate}` — overrides `run.mode` (default `train`).
 - `--ckpt PATH` — checkpoint for `resume` / `validate`.
 - `--overwrite` / `--ask-overwrite` — existing-results policy.
-- trailing `key=value` — Hydra overrides, e.g. `trainer.max_steps=500`.
+- trailing `key=value` — Hydra overrides, e.g. `trainer.max_epochs=50`.
 
 Results are written under `runs/<experiment>/<run_name>/` (config snapshot, logs,
 checkpoints). Re-running a config whose results already exist asks whether to
 delete them first.
 
-To create a run, copy `Configs/toy_run/`, set its `run_name`, edit the fragments,
-and (optionally) regenerate the snapshot:
+To create a run, copy `Configs/toy_run_offline/`, set its `run_name`, edit the
+fragments, and (optionally) regenerate the snapshot:
 
     python -m src.Workflow.Configs.run_config Configs/my_run   # writes Configs/my_run.yaml
 
@@ -90,13 +95,15 @@ See [`Configs/README.md`](Configs/README.md).
 
 ## Weights & Biases (optional)
 
-Enable wandb logging by selecting the logger group and the online setup:
+`toy_run_online` logs to W&B online; `toy_run_offline` logs offline (no key
+needed). To make a run go online, set `loggers.wandb.offline: false` and enable
+the online setup block in its `setup.yaml`:
 
-    python -m src.AIML.Execution.launch Configs --config-name toy_run \
-        loggers=wandb setup.wandb.enabled=true setup.wandb.mode=online setup.wandb.login=true
+    wandb: {enabled: true, mode: online, login: true}
+    user_credential: {enabled: true, ...}
 
 The API key is needed **once per machine** (cached in `~/.netrc`). Provide it by
 running `wandb login`, exporting `WANDB_API_KEY`, or putting it in a gitignored
 `user_credential.yaml` (`{wandb: {api_key: ...}}`) and enabling
 `setup.user_credential` — the setup step exports it before wandb login. Offline
-logging (`loggers=wandb`, default offline) needs no key.
+W&B (`loggers.wandb.offline: true`) needs no key.

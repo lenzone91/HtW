@@ -1,0 +1,19 @@
+# Entry point. Composes the sibling fragments via Hydra; the merged result is the
+# run config (see ../toy_run_offline.yaml for the composed snapshot).
+#
+# "Kitchen-sink" demo: every capability the package exposes is exercised — all
+# JEPA objective metrics (prediction + the four regularizers, with projectors and
+# the inverse-dynamics model), an LR scheduler, all checkpoint types, the
+# early-stopping safety guards, W&B gradient watching, and CSV + W&B loggers.
+# Trains for 10 epochs. This run logs W&B OFFLINE (no key/network; `wandb sync`
+# later); toy_run_online is identical but logs W&B online.
+defaults:
+  - setup
+  - datamodule
+  - module
+  - trainer
+  - loggers
+  - checkpoints
+  - early_stoppings
+  - run
+  - _self_

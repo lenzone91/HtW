@@ -1,0 +1,22 @@
+# @package setup
+device: auto
+reproducibility:
+  seed: 42
+  deterministic: false
+  cudnn_benchmark: false
+paths:
+  project_root: null
+  run_root: runs
+  experiment_name: ac_video_jepa
+  run_name: toy_run_offline          # this run's identity / results directory
+  existing_run_dir_policy: ask       # re-running asks before deleting prior results
+user_credential:
+  enabled: false                     # OFFLINE W&B needs no key
+  path: user_credential.yaml
+  environment_variables:
+    WANDB_API_KEY: [wandb, api_key]
+wandb:
+  enabled: false                     # OFFLINE: no key / login / network needed
+  mode: online
+  login: false
+  api_key_env_var: WANDB_API_KEY

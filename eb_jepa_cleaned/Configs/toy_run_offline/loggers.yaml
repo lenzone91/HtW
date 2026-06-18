@@ -1,13 +1,12 @@
 # @package _global_
 # Both loggers active. save_dir is overridden to the run's logs directory at
-# build time (runtime-context paths), so the values here are placeholders.
-# W&B is offline by default (no key / network needed); flip offline=false and
-# enable setup.wandb to push online.
+# build time. W&B is OFFLINE here (offline: true) — data is written locally and
+# can be pushed later with `wandb sync`; no key or network needed.
 loggers:
   csv:
     name: csv_reports
   wandb:
     project: ac_video_jepa
-    name: toy_run_2
+    name: toy_run_offline
     offline: true
     log_model: false
