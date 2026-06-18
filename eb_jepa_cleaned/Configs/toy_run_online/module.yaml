@@ -66,7 +66,14 @@ ac_video_jepa:
       scheduler_type: cosine_annealing       # LR schedule over the 10 epochs
       T_max: 10
       eta_min: 0.0
-  watch_gradients:                           # W&B gradient + parameter histograms
+  watch_gradients:                           # W&B gradient histograms (sanity check)
     enabled: true
-    log: all                                 # gradients + parameters
-    log_freq: 50
+    log: gradients                           # "gradients" | "parameters" | "all".
+                                             # Only "gradients" logs reliably under
+                                             # Lightning: parameter histograms hook the
+                                             # module's forward(), which the *_step loop
+                                             # bypasses, so they never fire.
+    log_freq: 1                              # every step: this toy run is only ~40 steps
+                                             # (8 samples / batch 2 * 10 epochs), so a
+                                             # larger freq would never reach a logging step
+

@@ -142,8 +142,8 @@ module:
         eta_min: 0.0
     watch_gradients:
       enabled: true
-      log: all
-      log_freq: 50
+      log: gradients
+      log_freq: 1
 trainer:
   max_epochs: 10
   accelerator: cpu
