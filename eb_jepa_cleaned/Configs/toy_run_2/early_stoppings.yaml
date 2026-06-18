@@ -1,0 +1,8 @@
+# @package early_stoppings
+# Same idea as Project_2: kill the run as soon as the monitored loss stops being
+# finite (NaN / inf). FiniteValueEarlyStopping wraps Lightning's EarlyStopping
+# with patience=0 and check_finite, so a single non-finite val/loss stops it.
+finite_val_loss:
+  early_stopping_type: finite_value
+  monitor: val/loss
+  mode: min

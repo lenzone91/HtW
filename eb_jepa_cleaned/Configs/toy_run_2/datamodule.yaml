@@ -1,0 +1,35 @@
+# @package datamodule
+default:
+  datasets:
+    train:
+      two_rooms:
+        size: 8
+        val_size: 4
+        n_steps: 6
+        sample_length: 3
+        img_size: 16
+        batch_size: 2
+        train: true
+        device: cpu
+    val:
+      two_rooms:
+        size: 4
+        val_size: 4
+        n_steps: 6
+        sample_length: 3
+        img_size: 16
+        batch_size: 2
+        train: false
+        device: cpu
+  collators:
+    train:
+      ac_video_jepa:
+        collator_type: ac_video_jepa
+    val:
+      ac_video_jepa:
+        collator_type: ac_video_jepa
+  dataloader_configs:
+    train:
+      batch_size: 2
+    val:
+      batch_size: 2

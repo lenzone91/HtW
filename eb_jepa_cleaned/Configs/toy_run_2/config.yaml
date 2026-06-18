@@ -1,0 +1,17 @@
+# Entry point for the `toy_run_2` run. Composes the sibling fragments via Hydra.
+# Each fragment owns one config section. The merged result is the run config
+# (see ../toy_run_2.yaml for the composed snapshot).
+#
+# vs toy_run: CSV + W&B loggers are active, checkpoints (keep last + best-val)
+# and early stopping (kill on non-finite loss) are wired, and it trains for two
+# full epochs (with end-of-epoch validation).
+defaults:
+  - setup
+  - datamodule
+  - module
+  - trainer
+  - loggers
+  - checkpoints
+  - early_stoppings
+  - run
+  - _self_

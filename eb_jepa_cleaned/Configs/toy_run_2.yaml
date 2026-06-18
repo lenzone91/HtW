@@ -1,0 +1,158 @@
+setup:
+  device: auto
+  reproducibility:
+    seed: 42
+    deterministic: false
+    cudnn_benchmark: false
+  paths:
+    project_root: null
+    run_root: runs
+    experiment_name: ac_video_jepa
+    run_name: toy_run_2
+    existing_run_dir_policy: ask
+  user_credential:
+    enabled: false
+    path: user_credential.yaml
+    environment_variables:
+      WANDB_API_KEY:
+      - wandb
+      - api_key
+  wandb:
+    enabled: false
+    mode: online
+    login: false
+    api_key_env_var: WANDB_API_KEY
+datamodule:
+  default:
+    datasets:
+      train:
+        two_rooms:
+          size: 8
+          val_size: 4
+          n_steps: 6
+          sample_length: 3
+          img_size: 16
+          batch_size: 2
+          train: true
+          device: cpu
+      val:
+        two_rooms:
+          size: 4
+          val_size: 4
+          n_steps: 6
+          sample_length: 3
+          img_size: 16
+          batch_size: 2
+          train: false
+          device: cpu
+    collators:
+      train:
+        ac_video_jepa:
+          collator_type: ac_video_jepa
+      val:
+        ac_video_jepa:
+          collator_type: ac_video_jepa
+    dataloader_configs:
+      train:
+        batch_size: 2
+      val:
+        batch_size: 2
+module:
+  ac_video_jepa:
+    module_type: ac_video_jepa
+    encoder:
+      input_shape:
+      - 2
+      - 16
+      - 16
+      input_channels: 2
+      stack_sizes:
+      - 4
+      - 8
+      num_blocks: 1
+      mlp_output_dim: 32
+    predictor:
+      hidden_size: null
+      action_dim: 2
+      num_layers: 1
+      use_encoder_final_ln: true
+    action_encoder:
+      action_encoder_type: identity
+    rollout:
+      rollout_type: latent
+      nsteps: 1
+      unroll_mode: autoregressive
+      ctxt_window_time: 1
+      return_all_steps: false
+    metrics:
+      set_type: metric
+      metrics:
+        autoregressive_prediction_loss:
+          prediction_cost:
+            prediction_cost_type: square_loss_seq
+            use_projector: false
+            proj: null
+        hinge_std:
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          std_margin: 1.0
+          first_t_only: false
+          spatial_as_samples: false
+        covariance:
+          projector:
+            enabled: false
+            mlp_spec: null
+            hidden_multiplier: 4
+          first_t_only: false
+          spatial_as_samples: false
+    loss:
+      loss_type: weighted_metric
+      metric_weights:
+        autoregressive_prediction_loss: 1.0
+        hinge_std: 1.0
+        covariance: 1.0
+    optimizer_configs:
+      optimizer:
+        optimizer_type: adam
+        lr: 0.001
+    scheduler_configs: {}
+trainer:
+  max_epochs: 2
+  accelerator: cpu
+  enable_checkpointing: true
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: 0
+  log_every_n_steps: 1
+  enable_progress_bar: false
+  enable_model_summary: false
+loggers:
+  csv:
+    name: csv_reports
+  wandb:
+    project: ac_video_jepa
+    name: toy_run_2
+    offline: true
+    log_model: false
+checkpoints:
+  last:
+    checkpoint_type: last
+    filename: last
+    every_n_epochs: 1
+  best_val:
+    checkpoint_type: best_value
+    monitor: val/loss
+    mode: min
+    save_top_k: 1
+    filename: best-{epoch}-{step}
+early_stoppings:
+  finite_val_loss:
+    early_stopping_type: finite_value
+    monitor: val/loss
+    mode: min
+run:
+  mode: train
+  imports:
+  - src.AcVideoJEPA
+  checkpoint_path: null

@@ -1,0 +1,14 @@
+# @package checkpoints
+# Same idea as Project_2: keep the latest checkpoint (to resume) and the single
+# best-validation checkpoint (selected by val/loss). dirpath is left to Lightning
+# (resolved under the run directory).
+last:
+  checkpoint_type: last
+  filename: last
+  every_n_epochs: 1
+best_val:
+  checkpoint_type: best_value
+  monitor: val/loss          # the validation loss logged by the module each epoch
+  mode: min
+  save_top_k: 1
+  filename: best-{epoch}-{step}

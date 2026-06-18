@@ -1,0 +1,13 @@
+# @package _global_
+# Both loggers active. save_dir is overridden to the run's logs directory at
+# build time (runtime-context paths), so the values here are placeholders.
+# W&B is offline by default (no key / network needed); flip offline=false and
+# enable setup.wandb to push online.
+loggers:
+  csv:
+    name: csv_reports
+  wandb:
+    project: ac_video_jepa
+    name: toy_run_2
+    offline: true
+    log_model: false

@@ -1,0 +1,7 @@
+# @package run
+# Run orchestration (read by AIML/Execution/launch): default mode, the modules to
+# import so the experiment's concretes register, and the resume/validate ckpt.
+mode: train
+imports:
+  - src.AcVideoJEPA
+checkpoint_path: null
