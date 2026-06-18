@@ -1,0 +1,5 @@
+# @package _global_
+# Lightning loggers. Empty disables logging. For W&B use:
+#   loggers:
+#     wandb: {project: ac_video_jepa, offline: true, save_dir: logs, log_model: false}
+loggers: {}

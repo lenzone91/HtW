@@ -1,38 +1,48 @@
 # Configs
 
-User run configs. **One `.yaml` here = one run.** This is where you stack your
-experiments; the framework's reusable config groups live in
-`src/AcVideoJEPA/configs/` (datamodule / module / trainer / setup / loggers) and
-are pulled in from here.
+User run configs. **One run = one folder of fragments + a composed snapshot.**
 
-## Writing a run config
+    Configs/
+      toy_run/            <- editable source: YAML fragments + a config.yaml entry
+        config.yaml       <- entry: a Hydra `defaults:` list composing the fragments
+        setup.yaml        <- # @package setup
+        datamodule.yaml   <- # @package datamodule
+        module.yaml       <- # @package module
+        trainer.yaml      <- # @package trainer
+        loggers.yaml      <- # @package _global_  (sets `loggers`)
+        run.yaml          <- # @package run       (mode / imports / checkpoint_path)
+      toy_run.yaml        <- the merged/composed snapshot (generated; for repro & inspection)
 
-Copy `toy_run.yaml` and edit. A run config:
+The fragments are the editable source of truth; each owns one config section. The
+sibling `<run>.yaml` is the fully-merged result. **Composition is done by Hydra**
+(via `src/Workflow/Configs/run_config.py`) — no bespoke resolver.
 
-- selects the framework groups via a `defaults:` list and the `pkg://` search
-  path `pkg://src.AcVideoJEPA.configs` (so you don't duplicate the groups);
-- sets `setup.paths.run_name` — this is the run's identity and its results
-  directory (`runs/<experiment_name>/<run_name>`);
-- overrides anything else under `_self_` (e.g. `trainer.max_steps`,
-  `module.ac_video_jepa.encoder.*`, `loggers` via `- loggers: wandb`).
+## Add a run
 
-## Launching
+Copy `toy_run/` to `my_run/`, set `setup.paths.run_name: my_run` in `my_run/setup.yaml`,
+and edit the fragments. To (re)generate the merged snapshot:
 
-    python -m src.AIML.Execution.launch Configs --config-name toy_run
+    python -m src.Workflow.Configs.run_config Configs/my_run        # writes Configs/my_run.yaml
 
-`--mode` (train/resume/validate) overrides `run.mode`; `--ckpt PATH` feeds
-resume/validate; trailing `key=value` args are Hydra overrides, e.g.
+## Launch
 
-    python -m src.AIML.Execution.launch Configs --config-name toy_run trainer.max_steps=500
+Point the launcher at the run **folder** (composes it) or the **snapshot**:
+
+    python -m src.AIML.Execution.launch Configs/toy_run             # folder
+    python -m src.AIML.Execution.launch Configs/toy_run.yaml        # snapshot
+
+- `--mode {train,resume,validate}` overrides `run.mode`.
+- `--ckpt PATH` feeds resume / validate.
+- `--overwrite` / `--ask-overwrite` set the existing-results policy.
+- trailing `key=value` are Hydra overrides, e.g. `trainer.max_steps=500`.
 
 ## One config = one run (existing results)
 
-`run_name` keys the results directory, so re-running the same config targets the
-same results. With `existing_run_dir_policy: ask` (the convention here), a re-run
-detects the existing results and **asks whether to delete them**; on yes it
-removes them and runs fresh, on no it aborts. Use `--overwrite` to force deletion
-without asking, or `--ask-overwrite` to force the prompt. In a non-interactive
-shell, `ask` aborts rather than hang.
+`setup.paths.run_name` keys the results directory
+(`runs/<experiment_name>/<run_name>/`). With `existing_run_dir_policy: ask` (the
+convention here), re-running a config whose results already exist **asks whether
+to delete them**; on yes it deletes and runs fresh, on no it aborts. `--overwrite`
+forces deletion; in a non-interactive shell `ask` aborts rather than hang.
 
-> Run configs are user-specific; consider keeping personal ones out of version
-> control.
+> Run configs are user-specific; keep personal ones out of version control if
+> they contain machine-specific paths or secrets.

@@ -23,10 +23,13 @@ into a running train / resume / validate flow.
 
 ## launch
 
-`launch` (or `python -m src.AIML.Execution.launch <config_dir> ...`)
-picks the mode from `--mode` or `config["run"]["mode"]` and routes to the right
-flow. `--overwrite` / `--ask-overwrite` set the run-dir policy; `--ckpt` gives
-the resume/validate checkpoint; trailing `key=value` args are Hydra overrides.
+`launch` (or `python -m src.AIML.Execution.launch <run_path> ...`) takes a **run
+path** — a run folder (`Configs/<run>/`) or a resolved snapshot
+(`Configs/<run>.yaml`), resolved via `Workflow/Configs.resolve_run_config`
+(Hydra). It picks the mode from `--mode` or `config["run"]["mode"]` and routes to
+the right flow. `--overwrite` / `--ask-overwrite` set the run-dir policy; `--ckpt`
+gives the resume/validate checkpoint; trailing `key=value` args are Hydra
+overrides.
 
 It stays **generic**: the experiment's concretes are registered by importing the
 modules named in `config["run"]["imports"]` (resolved dynamically), so AIML never

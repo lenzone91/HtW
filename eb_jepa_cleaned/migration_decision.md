@@ -475,3 +475,32 @@ define a loss, not a subsystem; modeling it as encoder + metrics avoids a
 premature abstraction.
 
 Status: accepted.
+## Decision 34 — User run configs are fragment folders, composed by Hydra
+
+User run configs live in the project-root `Configs/` and follow the
+Project_2-style organization: one run is a **folder of YAML fragments** plus a
+**merged snapshot**.
+
+    Configs/
+      <run>/            editable source: section fragments + a `config.yaml` entry
+        config.yaml     a Hydra `defaults:` list composing the fragments
+        setup.yaml, datamodule.yaml, module.yaml, trainer.yaml, loggers.yaml, run.yaml
+      <run>.yaml        the merged/composed snapshot (generated; reproducibility)
+
+The composition itself is **Hydra** (this honors Decision 25 — no bespoke
+folder-reference resolver). `Workflow/Configs.resolve_run_config(path)` is the
+thin custom entry point over Hydra: it accepts a run folder (composes its
+`config.yaml` entry) or a resolved snapshot file and returns a plain dict;
+`save_composed_run` writes the `<run>.yaml` snapshot (CLI:
+`python -m src.Workflow.Configs.run_config Configs/<run>`).
+
+The launcher takes a run path (folder or snapshot). `setup.paths.run_name` keys
+the results directory, so one config == one run; with
+`existing_run_dir_policy: ask`, re-running an existing config prompts to delete
+the prior results.
+
+Reason: matches the run-config UX the project wants (editable fragment folders +
+an inspectable merged snapshot) while keeping Hydra as the single composition
+engine.
+
+Status: accepted.

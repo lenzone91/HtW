@@ -1,7 +1,11 @@
 """
-User run configs in the project-root Configs/ folder: a thin run config there
-reuses the framework groups (pkg:// search path) and launches end-to-end, and
+User run configs in project-root Configs/ as Project_2-style fragment folders:
+`Configs/<run>/` (fragments + config.yaml entry, composed by Hydra) and the
+merged `Configs/<run>.yaml` snapshot. Launching works from either form, and
 re-running an existing config triggers the existing-results "ask" policy.
+
+`monkeypatch.chdir(tmp_path)` makes the config's relative `run_root` ("runs")
+resolve under a temp dir, so run directories don't pollute the repo.
 """
 
 from pathlib import Path
@@ -9,27 +13,44 @@ from pathlib import Path
 import pytest
 
 from src.AIML.Execution.launch import launch
+from src.Workflow.Configs.run_config import resolve_run_config, save_composed_run
 
-CONFIGS_DIR = str(Path(__file__).resolve().parents[3] / "Configs")
+CONFIGS = Path(__file__).resolve().parents[3] / "Configs"
+RUN_DIR = CONFIGS / "toy_run"
+RUN_SNAPSHOT = CONFIGS / "toy_run.yaml"
 
 
-def test_launch_user_config_from_configs_folder(monkeypatch, tmp_path):
+def test_resolve_folder_and_snapshot_agree():
+    folder = resolve_run_config(str(RUN_DIR))
+    snapshot = resolve_run_config(str(RUN_SNAPSHOT))
+    assert folder["setup"]["paths"]["run_name"] == "toy_run"
+    assert set(folder) == set(snapshot)
+    assert folder["module"].keys() == snapshot["module"].keys()
+
+
+def test_save_composed_run_writes_sibling_snapshot(tmp_path):
+    out = save_composed_run(str(RUN_DIR), output_path=tmp_path / "toy_run.yaml")
+    assert out.is_file()
+    assert resolve_run_config(str(out))["setup"]["paths"]["run_name"] == "toy_run"
+
+
+def test_launch_from_run_folder(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    objects = launch(
-        CONFIGS_DIR,
-        config_name="toy_run",
-        existing_run_dir_policy="overwrite",
-    )
+    objects = launch(str(RUN_DIR), existing_run_dir_policy="overwrite")
     assert objects["trainer"].state.finished
-    # run_name from the config keys the results directory
     assert (tmp_path / "runs" / "ac_video_jepa" / "toy_run").is_dir()
+
+
+def test_launch_from_composed_snapshot(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    objects = launch(str(RUN_SNAPSHOT), existing_run_dir_policy="overwrite")
+    assert objects["trainer"].state.finished
 
 
 def test_rerun_existing_results_triggers_ask(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    # First run creates the results.
-    launch(CONFIGS_DIR, config_name="toy_run", existing_run_dir_policy="overwrite")
-    # Re-running the same config uses the config's policy (ask); non-interactive
-    # -> it aborts rather than silently overwrite (the user is asked otherwise).
+    launch(str(RUN_DIR), existing_run_dir_policy="overwrite")  # create results
+    # Re-running uses the config's policy (ask); non-interactive -> aborts rather
+    # than silently overwrite (the user is prompted otherwise).
     with pytest.raises(FileExistsError):
-        launch(CONFIGS_DIR, config_name="toy_run")
+        launch(str(RUN_DIR))

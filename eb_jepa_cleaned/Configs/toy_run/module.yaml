@@ -1,0 +1,50 @@
+# @package module
+ac_video_jepa:
+  module_type: ac_video_jepa
+  encoder:
+    input_shape: [2, 16, 16]
+    input_channels: 2
+    stack_sizes: [4, 8]
+    num_blocks: 1
+    mlp_output_dim: 32
+  predictor:
+    hidden_size: null
+    action_dim: 2
+    num_layers: 1
+    use_encoder_final_ln: true
+  action_encoder:
+    action_encoder_type: identity
+  rollout:
+    rollout_type: latent
+    nsteps: 1
+    unroll_mode: autoregressive
+    ctxt_window_time: 1
+    return_all_steps: false
+  metrics:
+    set_type: metric
+    metrics:
+      autoregressive_prediction_loss:
+        prediction_cost:
+          prediction_cost_type: square_loss_seq
+          use_projector: false
+          proj: null
+      hinge_std:
+        projector: {enabled: false, mlp_spec: null, hidden_multiplier: 4}
+        std_margin: 1.0
+        first_t_only: false
+        spatial_as_samples: false
+      covariance:
+        projector: {enabled: false, mlp_spec: null, hidden_multiplier: 4}
+        first_t_only: false
+        spatial_as_samples: false
+  loss:
+    loss_type: weighted_metric
+    metric_weights:
+      autoregressive_prediction_loss: 1.0
+      hinge_std: 1.0
+      covariance: 1.0
+  optimizer_configs:
+    optimizer:
+      optimizer_type: adam
+      lr: 0.001
+  scheduler_configs: {}

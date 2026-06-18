@@ -11,16 +11,20 @@ are registered by importing the modules listed in `config["run"]["imports"]`
 (e.g. `src.AcVideoJEPA`) — resolved dynamically, not statically, so
 AIML never imports a concrete experiment.
 
+The config is given as a **run path**: a run folder (`Configs/<run>/`, whose
+`config.yaml` entry composes the fragments) or a resolved snapshot
+(`Configs/<run>.yaml`). Composition is done by Hydra (`resolve_run_config`).
+
 CLI:
-    python -m src.AIML.Execution.launch <config_dir> \
-        [--config-name config] [--mode train|resume|validate] \
-        [--ckpt PATH] [--overwrite | --ask-overwrite] [key=value ...]
+    python -m src.AIML.Execution.launch <run_path> \
+        [--mode train|resume|validate] [--ckpt PATH] \
+        [--overwrite | --ask-overwrite] [key=value ...]
 """
 
 import argparse
 import importlib
 
-from ...Workflow.Configs.compose import load_resolved_config
+from ...Workflow.Configs.run_config import resolve_run_config
 from ...Workflow.Setup import build_runtime_context
 from .resume import run_resume_training
 from .train import run_training
@@ -30,17 +34,17 @@ RUN_MODES = ("train", "resume", "validate")
 
 
 def launch(
-    config_dir: str,
-    config_name: str = "config",
+    config_path: str,
     mode: str | None = None,
     overrides: list[str] | None = None,
     existing_run_dir_policy: str | None = None,
     checkpoint_path: str | None = None,
 ) -> dict:
     """
-    Compose config, build runtime context, and dispatch to the chosen run mode.
+    Resolve a run config (folder or snapshot), build the runtime context, and
+    dispatch to the chosen run mode.
     """
-    config = load_resolved_config(config_dir, config_name, overrides=overrides)
+    config = resolve_run_config(config_path, overrides=overrides)
     _import_registrations(config)
 
     if existing_run_dir_policy is not None:
@@ -83,8 +87,9 @@ def _import_registrations(config: dict) -> None:
 
 def main(argv: list[str] | None = None) -> dict:
     parser = argparse.ArgumentParser(description="Launch a run (train/resume/validate).")
-    parser.add_argument("config_dir", help="Hydra config directory.")
-    parser.add_argument("--config-name", default="config")
+    parser.add_argument(
+        "config_path", help="Run folder (Configs/<run>) or a resolved .yaml snapshot."
+    )
     parser.add_argument(
         "--mode",
         choices=RUN_MODES,
@@ -105,8 +110,7 @@ def main(argv: list[str] | None = None) -> dict:
     args = parser.parse_args(argv)
 
     return launch(
-        config_dir=args.config_dir,
-        config_name=args.config_name,
+        config_path=args.config_path,
         mode=args.mode,
         overrides=args.overrides,
         existing_run_dir_policy=args.policy,

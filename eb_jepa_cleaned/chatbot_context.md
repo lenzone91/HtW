@@ -45,7 +45,7 @@ Current migration objectives:
 ## Target Source Layout
 
     eb_jepa_cleaned/            (project root: README, pyproject.toml, tests/)
-      Configs/                  user run configs (one .yaml = one run)
+      Configs/                  user run configs (one run = a fragment folder + a composed .yaml)
       src/                      the importable package (`import src...`)
         Workflow/
         AIML/
@@ -205,10 +205,12 @@ and runs config-driven end-to-end (Backbones, Rollout, Metrics, Module, Data;
 `Workflow/Setup` runtime_context; Hydra config tree; train/resume/validate run
 modes + `launch` CLI; wandb logging incl. credential-file loading). Source now
 lives in `src/` (import root `src.*`); user run configs live in project-root
-`Configs/` (one .yaml = one run, reusing framework groups via a `pkg://` search
-path; existing-results -> `ask`). Project README is an install/usage tutorial;
-the architecture doc moved to `src/README.md`. Full suite: 246 passed on
-`.venv_cleaned_jepa`. Remaining is optional polish (planning/evaluation
+`Configs/` as Project_2-style fragment folders — `Configs/<run>/` (fragments +
+`config.yaml` entry, composed by Hydra via `Workflow/Configs.resolve_run_config`)
++ a merged `Configs/<run>.yaml` snapshot; existing-results -> `ask`. Project
+README is an install/usage tutorial; the architecture doc moved to
+`src/README.md`. Full suite: 249 passed on `.venv_cleaned_jepa`. Remaining is
+optional polish (planning/evaluation
 trajectories, Execution reports).
 
 Done:
@@ -283,10 +285,11 @@ Done so far (suite 201 passing):
 - Importing `src.AcVideoJEPA` registers the whole experiment.
 - `AIML/Execution` run orchestration: `train.py`/`resume.py`/`validate.py`
   (`run_training`/`run_resume_training`/`run_validation`), `snapshots.py`, and
-  `launch.py` — the entrypoint that composes config (Configs) -> builds
-  runtime_context (Setup) -> dispatches by `--mode` or `config['run']['mode']`.
-  CLI: `python -m src.AIML.Execution.launch <config_dir> --mode train
-  --overwrite [key=value ...]`. Generic: registers the experiment via
+  `launch.py` — the entrypoint that resolves a run path (folder or snapshot, via
+  `resolve_run_config`) -> builds runtime_context (Setup) -> dispatches by
+  `--mode` or `config['run']['mode']`. CLI:
+  `python -m src.AIML.Execution.launch Configs/<run> --mode train --overwrite
+  [key=value ...]`. Generic: registers the experiment via
   `config['run']['imports']` (dynamic import, no static AIML->experiment dep).
 
 - wandb wired: `WandbLogger` (registered) with `save_dir` resolved to the run's
@@ -329,7 +332,7 @@ A prior, less-modular migration of `ac_video_jepa` exists as a reference
 - Run tests: `.venv_cleaned_jepa/Scripts/python.exe -m pytest` from the project
   root.
 - Launch runs: `.venv_cleaned_jepa/Scripts/python.exe -m src.AIML.Execution.launch
-  Configs --config-name <run>` (user run configs live in project-root `Configs/`).
+  Configs/<run>` (a run folder) or `... Configs/<run>.yaml` (the snapshot).
 - Full suite currently green (244+).
 
 ## Conventions

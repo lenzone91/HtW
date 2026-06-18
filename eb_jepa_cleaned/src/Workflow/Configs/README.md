@@ -24,6 +24,11 @@ subsystem-specific content and does **not** build objects — that is
   `DictConfig`/`ListConfig` survives.
 - `conversion.py` — `load_config` / `save_config` for plain-dict YAML/JSON/TOML.
 - `savings.py` — reproducibility snapshot helpers (config + runtime context).
+- `run_config.py` — `resolve_run_config(path)`: resolve a *run* config given as a
+  fragment folder (`Configs/<run>/`, composes its `config.yaml` entry) or a
+  resolved snapshot file; composition is delegated to Hydra (`load_resolved_config`).
+  `save_composed_run(...)` writes the merged `<run>.yaml` snapshot;
+  `python -m src.Workflow.Configs.run_config <folder>` is the CLI.
 - `errors.py` — `ConfigError`.
 
 ## Hydra policy

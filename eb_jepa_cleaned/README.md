@@ -60,11 +60,17 @@ Check the install:
 
 ## Launching experiments
 
-Run configs live in [`Configs/`](Configs/) — **one `.yaml` = one run**. Each
-reuses the framework's config groups (`src/AcVideoJEPA/configs/`) and sets the
-run's identity (`setup.paths.run_name`). Launch with:
+Run configs live in [`Configs/`](Configs/) — **one run = one folder of fragments
++ a composed snapshot**:
 
-    python -m src.AIML.Execution.launch Configs --config-name toy_run
+    Configs/toy_run/        editable fragments + config.yaml entry
+    Configs/toy_run.yaml    the merged snapshot (generated)
+
+Each run sets its identity via `setup.paths.run_name`. Launch by pointing at the
+run folder (Hydra composes it) or the snapshot:
+
+    python -m src.AIML.Execution.launch Configs/toy_run
+    python -m src.AIML.Execution.launch Configs/toy_run.yaml
 
 - `--mode {train,resume,validate}` — overrides `run.mode` (default `train`).
 - `--ckpt PATH` — checkpoint for `resume` / `validate`.
@@ -73,10 +79,14 @@ run's identity (`setup.paths.run_name`). Launch with:
 
 Results are written under `runs/<experiment>/<run_name>/` (config snapshot, logs,
 checkpoints). Re-running a config whose results already exist asks whether to
-delete them first (see [`Configs/README.md`](Configs/README.md)).
+delete them first.
 
-To create a new run, copy `Configs/toy_run.yaml`, rename it, set its `run_name`,
-and edit the overrides.
+To create a run, copy `Configs/toy_run/`, set its `run_name`, edit the fragments,
+and (optionally) regenerate the snapshot:
+
+    python -m src.Workflow.Configs.run_config Configs/my_run   # writes Configs/my_run.yaml
+
+See [`Configs/README.md`](Configs/README.md).
 
 ## Weights & Biases (optional)
 
